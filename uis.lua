@@ -311,33 +311,6 @@ do
         }
 
         for Index, Property in Properties do
-            if Property == "FontFace" then
-                Data.Instance[Property] = Library.Font
-                continue
-            end
-
-            if Property == "TextSize" then
-                Data.Instance[Property] = Library.FontSize
-                continue
-            end
-
-            if Property == "Name" then
-                Data.Instance[Property] = "\0"
-                continue
-            end
-
-            if Class == "TextButton" then
-                if Property == "AutoButtonColor" then
-                    Data.Instance[Property] = false
-                    continue
-                end
-
-                if Property == "Text" then
-                    Data.Instance[Property] = ""
-                    continue
-                end
-            end
-
             Data.Instance[Index] = Property
         end
 
@@ -428,13 +401,14 @@ do
         end
 
         local previousState = objectStates[Property]
-        local wasFading = previousState ~= nil
-            and previousState.tween.PlaybackState == Enum.PlaybackState.Playing
+        local wasFading = previousState ~= nil and not previousState.settled
 
         local baseTransparency
         if wasFading then
             baseTransparency = previousState.base
-            previousState.tween:Cancel()
+            if previousState.tween.PlaybackState == Enum.PlaybackState.Playing then
+                previousState.tween:Cancel()
+            end
         else
             baseTransparency = Object[Property]
         end
@@ -452,7 +426,7 @@ do
             [Property] = Visibility and baseTransparency or 1
         }, fadeInfo, Object)
 
-        local currentState = { base = baseTransparency, tween = NewTween }
+        local currentState = { base = baseTransparency, tween = NewTween, settled = false }
         objectStates[Property] = currentState
 
         Library:Connect(NewTween.Completed, function(playbackState)
@@ -462,10 +436,13 @@ do
 
             if not Visibility then
                 task.wait()
-                if objectStates[Property] == currentState then
-                    Object[Property] = baseTransparency
+                if objectStates[Property] ~= currentState then
+                    return
                 end
+                Object[Property] = baseTransparency
             end
+
+            currentState.settled = true
         end)
 
         return NewTween
@@ -9791,7 +9768,9 @@ do
                                     and OpenFrame ~= Settingss
                                     and OpenFrame.IsOpen
                                     and OpenFrame.Frame
-                                    and OpenFrame.Frame:IsMouseOverFrame()
+                                    and Library.IsMouseOverFrame(
+                                        typeof(OpenFrame.Frame) == "Instance" and { Instance = OpenFrame.Frame } or OpenFrame.Frame
+                                    )
                                 then
                                     return
                                 end
