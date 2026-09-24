@@ -804,7 +804,6 @@ do
         local Success, Result = pcall(Function, table.unpack(Arguements))
 
         if not Success then
-            warn(Result)
             return false
         end
 
@@ -1218,7 +1217,6 @@ do
         end)
 
         if not Success then
-            warn("Failed to get config:\n" .. Result)
             return
         end
 
