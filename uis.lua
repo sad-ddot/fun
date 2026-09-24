@@ -7385,8 +7385,8 @@ do
         Library.Loader = function(self, params)
             params = params or {}
 
-            local loaderName = params.Name or params.name
-            assert(type(loaderName) == "string" and loaderName ~= "", "Loader requires a Name")
+            local loaderName = tostring(params.Name or params.name or params.Title or params.title or "")
+            local frameSize = params.Size or UDim2.new(0, 460, 0, 340)
 
             local navigationWidth = params.NavigationWidth or 130
             local loader = {
@@ -7401,14 +7401,24 @@ do
 
             local items = {}
             do
-                items.mainFrame = Library:Create("Frame", {
+                items.root = Library:Create("CanvasGroup", {
                     Name = "\0",
                     Parent = Library.Holder.Instance,
                     AnchorPoint = Vector2.new(0.5, 0.5),
                     Position = UDim2.new(0.5, 0, 0.5, 0),
-                    Size = params.Size or UDim2.new(0, 460, 0, 360),
+                    Size = UDim2.new(frameSize.X.Scale, frameSize.X.Offset + 40, frameSize.Y.Scale, frameSize.Y.Offset + 54),
+                    BackgroundTransparency = 1,
                     BorderSizePixel = 0,
-                    Visible = false,
+                    GroupTransparency = 1,
+                    Visible = false
+                })
+
+                items.mainFrame = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = items.root.Instance,
+                    Position = UDim2.new(0, 20, 0, 34),
+                    Size = UDim2.new(1, -40, 1, -54),
+                    BorderSizePixel = 0,
                     BackgroundColor3 = Library.Theme["Background"]
                 }):AddToTheme({ BackgroundColor3 = "Background" })
 
@@ -7462,27 +7472,16 @@ do
                     BackgroundColor3 = Library.Theme["Light Border"]
                 }):AddToTheme({ BackgroundColor3 = "Light Border" })
 
-                items.titleBar = Library:Create("Frame", {
-                    Name = "\0",
-                    Parent = items.mainFrame.Instance,
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 10, 0, 2),
-                    Size = UDim2.new(1, -20, 0, 26)
-                })
-
                 items.title = Library:Create("TextLabel", {
                     Name = "\0",
-                    Parent = items.titleBar.Instance,
+                    Parent = items.mainFrame.Instance,
                     FontFace = Library.Font,
                     TextSize = Library.FontSize,
                     Text = loader.Name,
                     TextColor3 = Library.Theme["Text"],
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    AnchorPoint = Vector2.new(0, 0.5),
-                    Position = UDim2.new(0, 0, 0.5, 0),
-                    AutomaticSize = Enum.AutomaticSize.X,
-                    Size = UDim2.new(0, 0, 0, 15),
+                    AnchorPoint = Vector2.new(0, 1),
+                    Position = UDim2.new(0, -1, 0, -8),
+                    AutomaticSize = Enum.AutomaticSize.XY,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0
                 }):AddToTheme({ TextColor3 = "Text" })
@@ -7495,11 +7494,11 @@ do
 
                 items.exitOutline = Library:Create("TextButton", {
                     Name = "\0",
-                    Parent = items.titleBar.Instance,
+                    Parent = items.mainFrame.Instance,
                     AutoButtonColor = false,
                     Text = "",
-                    AnchorPoint = Vector2.new(1, 0.5),
-                    Position = UDim2.new(1, 0, 0.5, 0),
+                    AnchorPoint = Vector2.new(1, 1),
+                    Position = UDim2.new(1, 1, 0, -6),
                     Size = UDim2.new(0, 40, 0, 16),
                     BorderSizePixel = 0,
                     Visible = params.ButtonText ~= false,
@@ -7531,6 +7530,7 @@ do
                     TextSize = Library.FontSize,
                     Text = tostring(params.ButtonText or "exit"),
                     TextColor3 = Library.Theme["Inactive Text"],
+                    TextXAlignment = Enum.TextXAlignment.Center,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
                     Size = UDim2.new(1, 0, 1, 0)
@@ -7542,20 +7542,11 @@ do
                     LineJoinMode = Enum.LineJoinMode.Miter
                 })
 
-                items.titleSeparator = Library:Create("Frame", {
-                    Name = "\0",
-                    Parent = items.mainFrame.Instance,
-                    Position = UDim2.new(0, 0, 0, 28),
-                    Size = UDim2.new(1, 0, 0, 1),
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = Library.Theme["Outline"]
-                }):AddToTheme({ BackgroundColor3 = "Outline" })
-
                 items.bodyOutline = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.mainFrame.Instance,
-                    Position = UDim2.new(0, 10, 0, 36),
-                    Size = UDim2.new(1, -20, 1, -70),
+                    Position = UDim2.new(0, 10, 0, 10),
+                    Size = UDim2.new(1, -20, 1, -44),
                     BorderSizePixel = 0,
                     BackgroundColor3 = Library.Theme["Border 2"]
                 }):AddToTheme({ BackgroundColor3 = "Border 2" })
@@ -7702,17 +7693,45 @@ do
                     })
                 end
 
-                items.mainFrame:MakeDraggable()
                 loader.Items = items
             end
 
             local isBusy = false
             local savedMouseState = nil
 
-            local function fitExitButton()
-                local textWidth = items.exitText.Instance.TextBounds.X
-                items.exitOutline.Instance.Size = UDim2.new(0, math.max(40, textWidth + 18), 0, 16)
+            local fadeInfo = TweenInfo.new(Library.Animation.Time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local activeFade = nil
+
+            local function fadeRoot(isVisible, onFinished)
+                if activeFade then
+                    activeFade:Cancel()
+                end
+
+                local root = items.root.Instance
+                if isVisible then
+                    root.Visible = true
+                end
+
+                activeFade = TweenService:Create(root, fadeInfo, { GroupTransparency = isVisible and 0 or 1 })
+                activeFade.Completed:Connect(function(playbackState)
+                    if playbackState ~= Enum.PlaybackState.Completed then
+                        return
+                    end
+
+                    activeFade = nil
+                    if not isVisible then
+                        root.Visible = false
+                    end
+                    if onFinished then
+                        onFinished()
+                    end
+                end)
+                activeFade:Play()
             end
+
+            local isDragging = false
+            local dragStart = nil
+            local startPosition = nil
 
             local function closeOpenFrames()
                 for _, openFrame in Library.OpenFrames do
@@ -7755,11 +7774,12 @@ do
                     closeOpenFrames()
                 end
 
-                items.mainFrame:FadeDescendants(isOpen, function()
+                for _, tab in loader.Tabs do
+                    tab.Items.page.Instance.Visible = tab == loader.ActiveTab
+                end
+
+                fadeRoot(isOpen, function()
                     isBusy = false
-                    for _, tab in loader.Tabs do
-                        tab.Items.page.Instance.Visible = loader.IsOpen and tab == loader.ActiveTab
-                    end
                 end)
             end
 
@@ -7772,7 +7792,6 @@ do
                 items.exitOutline.Instance.Visible = text ~= false
                 if text ~= false then
                     items.exitText.Instance.Text = tostring(text or "exit")
-                    fitExitButton()
                 end
             end
 
@@ -7798,8 +7817,12 @@ do
                 end
                 table.clear(loader.Connections)
                 loader.IsOpen = false
-                if items.mainFrame.Instance.Parent then
-                    items.mainFrame.Instance:Destroy()
+                if activeFade then
+                    activeFade:Cancel()
+                    activeFade = nil
+                end
+                if items.root.Instance.Parent then
+                    items.root.Instance:Destroy()
                 end
             end
 
@@ -7813,12 +7836,12 @@ do
                 applyMouseState(false)
                 loader.IsOpen = false
 
-                if not items.mainFrame.Instance.Visible then
+                if not items.root.Instance.Visible then
                     loader:Destroy()
                     return
                 end
 
-                items.mainFrame:FadeDescendants(false, function()
+                fadeRoot(false, function()
                     loader:Destroy()
                 end)
             end
@@ -8009,14 +8032,43 @@ do
                 items.exitText:Tween({ TextColor3 = Library.Theme["Inactive Text"] })
             end)
 
-            table.insert(loader.Connections, items.exitText.Instance:GetPropertyChangedSignal("TextBounds"):Connect(fitExitButton))
+            items.mainFrame:Connect("InputBegan", function(input)
+                if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
+                    return
+                end
+
+                isDragging = true
+                dragStart = input.Position
+                startPosition = items.root.Instance.Position
+            end)
+
+            table.insert(loader.Connections, UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    isDragging = false
+                end
+            end))
+
+            table.insert(loader.Connections, UserInputService.InputChanged:Connect(function(input)
+                if not isDragging or not loader.IsOpen then
+                    return
+                end
+                if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
+                    return
+                end
+
+                local dragDelta = input.Position - dragStart
+                items.root.Instance.Position = UDim2.new(
+                    startPosition.X.Scale,
+                    startPosition.X.Offset + dragDelta.X,
+                    startPosition.Y.Scale,
+                    startPosition.Y.Offset + dragDelta.Y
+                )
+            end))
             table.insert(loader.Connections, RunService.RenderStepped:Connect(function()
                 if loader.IsOpen then
                     Library:GlobalUpdateOpenFrames()
                 end
             end))
-
-            fitExitButton()
 
             if params.Footer ~= nil then
                 loader:SetFooter(params.Footer, params.FooterBright)
@@ -9467,7 +9519,7 @@ do
                         PaddingLeft = UDim.new(0, 10)
                     })
 
-                    Library:Create("UIListLayout", {
+                    SettingsItems["Layout"] = Library:Create("UIListLayout", {
                         Name = "\0",
                         Parent = SettingsItems["Content"].Instance,
                         Padding = UDim.new(0, 5),
@@ -9605,6 +9657,112 @@ do
                         end
                     end
                 end)
+
+                local popupWidth = 254
+                local minimumHeight = 60
+                local maximumHeight = 420
+
+                local function fitToContent()
+                    local contentHeight = SettingsItems["Layout"].Instance.AbsoluteContentSize.Y
+                    local popupHeight = math.clamp(contentHeight + 30 + 10, minimumHeight, maximumHeight)
+                    SettingsHolder.Size = UDim2.new(0, popupWidth, 0, popupHeight)
+                end
+
+                SettingsItems["Layout"]:Connect("Changed", function(property)
+                    if property == "AbsoluteContentSize" then
+                        fitToContent()
+                    end
+                end)
+
+                function Settingss:Section(params)
+                    params = params or {}
+
+                    local section = {
+                        Name = tostring(params.Name or params.name or ""),
+                        IsSettings = true,
+                        Window = Settingss.Window,
+                        Page = Settingss.Page,
+                        Items = {}
+                    }
+
+                    local sectionItems = {}
+                    do
+                        sectionItems["SectionOutline"] = Library:Create("Frame", {
+                            Name = "\0",
+                            Parent = SettingsItems["Content"].Instance,
+                            Size = UDim2.new(1, 0, 0, 20),
+                            AutomaticSize = Enum.AutomaticSize.Y,
+                            BorderSizePixel = 0,
+                            BackgroundColor3 = Library.Theme["Outline"]
+                        }):AddToTheme({ BackgroundColor3 = "Outline" })
+
+                        sectionItems["Section"] = Library:Create("Frame", {
+                            Name = "\0",
+                            Parent = sectionItems["SectionOutline"].Instance,
+                            Position = UDim2.new(0, 1, 0, 1),
+                            Size = UDim2.new(1, -2, 1, -2),
+                            BorderSizePixel = 0,
+                            BackgroundColor3 = Library.Theme["Section"]
+                        }):AddToTheme({ BackgroundColor3 = "Section" })
+
+                        sectionItems["Content"] = Library:Create("Frame", {
+                            Name = "\0",
+                            Parent = sectionItems["Section"].Instance,
+                            BackgroundTransparency = 1,
+                            BorderSizePixel = 0,
+                            Position = UDim2.new(0, 10, 0, 14),
+                            Size = UDim2.new(1, -20, 0, 0),
+                            AutomaticSize = Enum.AutomaticSize.Y
+                        })
+
+                        Library:Create("UIListLayout", {
+                            Name = "\0",
+                            Parent = sectionItems["Content"].Instance,
+                            Padding = UDim.new(0, 5),
+                            SortOrder = Enum.SortOrder.LayoutOrder
+                        })
+
+                        Library:Create("UIPadding", {
+                            Name = "\0",
+                            Parent = sectionItems["Content"].Instance,
+                            PaddingBottom = UDim.new(0, 16)
+                        })
+
+                        sectionItems["Text"] = Library:Create("TextLabel", {
+                            Name = "\0",
+                            Parent = sectionItems["SectionOutline"].Instance,
+                            FontFace = Library.Font,
+                            TextSize = Library.FontSize,
+                            Text = section.Name,
+                            TextColor3 = Library.Theme["Text"],
+                            Position = UDim2.new(0, 6, 0, 0),
+                            Size = UDim2.new(0, 0, 0, 4),
+                            AutomaticSize = Enum.AutomaticSize.X,
+                            Visible = section.Name ~= "",
+                            BorderSizePixel = 0,
+                            BackgroundColor3 = Library.Theme["Section"]
+                        }):AddToTheme({ TextColor3 = "Text", BackgroundColor3 = "Section" })
+
+                        Library:Create("UIPadding", {
+                            Name = "\0",
+                            Parent = sectionItems["Text"].Instance,
+                            PaddingLeft = UDim.new(0, 4),
+                            PaddingRight = UDim.new(0, 4)
+                        })
+
+                        section.Items = sectionItems
+                    end
+
+                    function section:SetName(text)
+                        section.Name = tostring(text or "")
+                        sectionItems["Text"].Instance.Text = section.Name
+                        sectionItems["Text"].Instance.Visible = section.Name ~= ""
+                    end
+
+                    return setmetatable(section, Library)
+                end
+
+                fitToContent()
 
                 return setmetatable(Settingss, Library)
             end
