@@ -7570,15 +7570,58 @@ do
                     BackgroundColor3 = Library.Theme["Light Border"]
                 }):AddToTheme({ BackgroundColor3 = "Light Border" })
 
-                items.title = Library:Create("TextLabel", {
+                items.header = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.mainFrame.Instance,
+                    Position = UDim2.new(0, 0, 0, -28),
+                    Size = UDim2.new(1, 0, 0, 22),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = Library.Theme["Background"]
+                }):AddToTheme({ BackgroundColor3 = "Background" })
+
+                Library:Create("UIStroke", {
+                    Name = "\0",
+                    Parent = items.header.Instance,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    Color = Library.Theme["Outline"]
+                }):AddToTheme({ Color = "Outline" })
+
+                Library:Create("UIStroke", {
+                    Name = "\0",
+                    Parent = items.header.Instance,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    Color = Library.Theme["Border"],
+                    BorderOffset = UDim.new(0, 1)
+                }):AddToTheme({ Color = "Border" })
+
+                items.headerAccent = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = items.header.Instance,
+                    Size = UDim2.new(1, 0, 0, 1),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = Library.Theme["Accent"]
+                }):AddToTheme({ BackgroundColor3 = "Accent" })
+
+                items.headerDarkLiner = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = items.header.Instance,
+                    Position = UDim2.new(0, 0, 0, 1),
+                    Size = UDim2.new(1, 0, 0, 1),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = Library.Theme["Light Border"]
+                }):AddToTheme({ BackgroundColor3 = "Light Border" })
+
+                items.title = Library:Create("TextLabel", {
+                    Name = "\0",
+                    Parent = items.header.Instance,
                     FontFace = Library.Font,
                     TextSize = Library.FontSize,
                     Text = loader.Name,
                     TextColor3 = Library.Theme["Text"],
-                    AnchorPoint = Vector2.new(0, 1),
-                    Position = UDim2.new(0, -1, 0, -8),
+                    AnchorPoint = Vector2.new(0, 0.5),
+                    Position = UDim2.new(0, 8, 0.5, 1),
                     AutomaticSize = Enum.AutomaticSize.XY,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0
@@ -7592,11 +7635,11 @@ do
 
                 items.exitOutline = Library:Create("TextButton", {
                     Name = "\0",
-                    Parent = items.mainFrame.Instance,
+                    Parent = items.header.Instance,
                     AutoButtonColor = false,
                     Text = "",
-                    AnchorPoint = Vector2.new(1, 1),
-                    Position = UDim2.new(1, 1, 0, -6),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Position = UDim2.new(1, -3, 0.5, 1),
                     Size = UDim2.new(0, 40, 0, 16),
                     BorderSizePixel = 0,
                     Visible = params.ButtonText ~= false,
@@ -8130,7 +8173,7 @@ do
                 items.exitText:Tween({ TextColor3 = Library.Theme["Inactive Text"] })
             end)
 
-            items.mainFrame:Connect("InputBegan", function(input)
+            local function beginDrag(input)
                 if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then
                     return
                 end
@@ -8138,7 +8181,10 @@ do
                 isDragging = true
                 dragStart = input.Position
                 startPosition = items.root.Instance.Position
-            end)
+            end
+
+            items.mainFrame:Connect("InputBegan", beginDrag)
+            items.header:Connect("InputBegan", beginDrag)
 
             table.insert(loader.Connections, UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
