@@ -7459,8 +7459,8 @@ do
                 items.mainFrame = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.root.Instance,
-                    Position = UDim2.new(0, 20, 0, 34),
-                    Size = UDim2.new(1, -40, 1, -54),
+                    Position = UDim2.new(0, 20, 0, 6),
+                    Size = UDim2.new(1, -40, 1, -26),
                     BorderSizePixel = 0,
                     BackgroundColor3 = Library.Theme["Background"]
                 }):AddToTheme({ BackgroundColor3 = "Background" })
@@ -7518,45 +7518,20 @@ do
                 items.header = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.mainFrame.Instance,
-                    Position = UDim2.new(0, 0, 0, -28),
-                    Size = UDim2.new(1, 0, 0, 22),
+                    Position = UDim2.new(0, 0, 0, 2),
+                    Size = UDim2.new(1, 0, 0, 26),
                     BorderSizePixel = 0,
-                    BackgroundColor3 = Library.Theme["Background"]
-                }):AddToTheme({ BackgroundColor3 = "Background" })
+                    BackgroundTransparency = 1
+                })
 
-                Library:Create("UIStroke", {
+                items.headerSeparator = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.header.Instance,
-                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                    LineJoinMode = Enum.LineJoinMode.Miter,
-                    Color = Library.Theme["Outline"]
-                }):AddToTheme({ Color = "Outline" })
-
-                Library:Create("UIStroke", {
-                    Name = "\0",
-                    Parent = items.header.Instance,
-                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                    LineJoinMode = Enum.LineJoinMode.Miter,
-                    Color = Library.Theme["Border"],
-                    BorderOffset = UDim.new(0, 1)
-                }):AddToTheme({ Color = "Border" })
-
-                items.headerAccent = Library:Create("Frame", {
-                    Name = "\0",
-                    Parent = items.header.Instance,
+                    Position = UDim2.new(0, 0, 1, 0),
                     Size = UDim2.new(1, 0, 0, 1),
                     BorderSizePixel = 0,
-                    BackgroundColor3 = Library.Theme["Accent"]
-                }):AddToTheme({ BackgroundColor3 = "Accent" })
-
-                items.headerDarkLiner = Library:Create("Frame", {
-                    Name = "\0",
-                    Parent = items.header.Instance,
-                    Position = UDim2.new(0, 0, 0, 1),
-                    Size = UDim2.new(1, 0, 0, 1),
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = Library.Theme["Light Border"]
-                }):AddToTheme({ BackgroundColor3 = "Light Border" })
+                    BackgroundColor3 = Library.Theme["Outline"]
+                }):AddToTheme({ BackgroundColor3 = "Outline" })
 
                 items.title = Library:Create("TextLabel", {
                     Name = "\0",
@@ -7566,7 +7541,7 @@ do
                     Text = loader.Name,
                     TextColor3 = Library.Theme["Text"],
                     AnchorPoint = Vector2.new(0, 0.5),
-                    Position = UDim2.new(0, 8, 0.5, 1),
+                    Position = UDim2.new(0, 10, 0.5, 0),
                     AutomaticSize = Enum.AutomaticSize.XY,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0
@@ -7584,7 +7559,7 @@ do
                     AutoButtonColor = false,
                     Text = "",
                     AnchorPoint = Vector2.new(1, 0.5),
-                    Position = UDim2.new(1, -3, 0.5, 1),
+                    Position = UDim2.new(1, -8, 0.5, 0),
                     Size = UDim2.new(0, 40, 0, 16),
                     BorderSizePixel = 0,
                     Visible = params.ButtonText ~= false,
@@ -7631,8 +7606,8 @@ do
                 items.bodyOutline = Library:Create("Frame", {
                     Name = "\0",
                     Parent = items.mainFrame.Instance,
-                    Position = UDim2.new(0, 10, 0, 10),
-                    Size = UDim2.new(1, -20, 1, -44),
+                    Position = UDim2.new(0, 10, 0, 38),
+                    Size = UDim2.new(1, -20, 1, -72),
                     BorderSizePixel = 0,
                     BackgroundColor3 = Library.Theme["Border 2"]
                 }):AddToTheme({ BackgroundColor3 = "Border 2" })
