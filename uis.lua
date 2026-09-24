@@ -10,7 +10,6 @@
 
 -- hi guys 
 -- im gay
--- nigasense
 
 if getgenv().Library and getgenv().Library.Exit then
     getgenv().Library:Exit()
