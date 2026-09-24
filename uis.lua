@@ -4559,7 +4559,7 @@ do
                     Parent = Items["Stuff"].Instance,
                     TextColor3 = Library.Theme["Text"],
                     Text = "sametexe009",
-                    Size = UDim2.new(1, -90, 0, 15),
+                    Size = UDim2.new(1, 0, 0, 15),
                     BackgroundTransparency = 1,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Position = UDim2.new(0, 80, 0, 10),
@@ -4664,9 +4664,10 @@ do
                     Parent = Items["Stuff"].Instance,
                     TextColor3 = Library.Theme["Text"],
                     Text = Text,
-                    Size = UDim2.new(1, -90, 0, 15),
+                    Size = UDim2.new(1, 0, 0, 15),
                     BackgroundTransparency = 1,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
                     Position = UDim2.new(0, 80, 0, 24),
                     BorderSizePixel = 0
                 }):AddToTheme({ TextColor3 = 'Text' })
@@ -5012,7 +5013,6 @@ do
 
             local Viewer = {
                 Visible = true,
-                Mode = Params.Mode == "Text" and "Text" or "Image",
                 Entries = {},
                 Sections = {},
                 Columns = 4,
@@ -5183,27 +5183,6 @@ do
                 Items["InventoryViewer"]:FadeDescendants(Viewer.Visible)
             end
 
-            local function applyEntryMode(entry)
-                local isTextMode = Viewer.Mode == "Text"
-                entry.Image.Instance.Visible = not isTextMode
-
-                if isTextMode then
-                    entry.Name.Instance.Position = UDim2.new(0, 4, 0, 4)
-                    entry.Name.Instance.Size = UDim2.new(1, -8, 1, -20)
-                    entry.Name.Instance.TextXAlignment = Enum.TextXAlignment.Center
-                    entry.Name.Instance.TextYAlignment = Enum.TextYAlignment.Center
-                    entry.Name.Instance.TextWrapped = true
-                    entry.Name.Instance.TextTruncate = Enum.TextTruncate.None
-                else
-                    entry.Name.Instance.Position = UDim2.new(0, 4, 1, -22)
-                    entry.Name.Instance.Size = UDim2.new(1, -8, 0, 12)
-                    entry.Name.Instance.TextXAlignment = Enum.TextXAlignment.Left
-                    entry.Name.Instance.TextYAlignment = Enum.TextYAlignment.Center
-                    entry.Name.Instance.TextWrapped = false
-                    entry.Name.Instance.TextTruncate = Enum.TextTruncate.AtEnd
-                end
-            end
-
             local function RecalculateLayout()
                 local Holder = Items["Holder"].Instance
                 local Columns = math.max(math.floor(Viewer.Columns or 4), 1)
@@ -5368,8 +5347,6 @@ do
                     BorderSizePixel = 0
                 }):AddToTheme({ TextColor3 = "Accent" })
 
-                applyEntryMode(Entry)
-
                 Viewer.Entries[#Viewer.Entries + 1] = Entry
                 Section.Entries[#Section.Entries + 1] = Entry
                 return Entry
@@ -5484,13 +5461,6 @@ do
 
                 Viewer.Visible = isVisible
                 ApplyVisibility()
-            end
-
-            function Viewer:SetMode(mode)
-                Viewer.Mode = mode == "Text" and "Text" or "Image"
-                for _, entry in ipairs(Viewer.Entries) do
-                    applyEntryMode(entry)
-                end
             end
 
             function Viewer:Center()
