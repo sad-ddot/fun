@@ -410,6 +410,10 @@ do
         end
     end
 
+    local fadeStates = setmetatable({}, { __mode = "k" })
+    local fadeGenerations = setmetatable({}, { __mode = "k" })
+    local fadeTargets = setmetatable({}, { __mode = "k" })
+
     Library.Fade = function(Self, Property, Visibility, IsRawItem)
         local Object = Self.Instance or IsRawItem
 
@@ -417,22 +421,50 @@ do
             return
         end
 
-        local OldTransparency = Object[Property]
-        Object[Property] = Visibility and 1 or OldTransparency
+        local objectStates = fadeStates[Object]
+        if not objectStates then
+            objectStates = {}
+            fadeStates[Object] = objectStates
+        end
 
-        local FadeInfo = nil
+        local previousState = objectStates[Property]
+        local wasFading = previousState ~= nil
+            and previousState.tween.PlaybackState == Enum.PlaybackState.Playing
+
+        local baseTransparency
+        if wasFading then
+            baseTransparency = previousState.base
+            previousState.tween:Cancel()
+        else
+            baseTransparency = Object[Property]
+        end
+
+        if Visibility and not wasFading then
+            Object[Property] = 1
+        end
+
+        local fadeInfo = nil
         if not Visibility then
-            FadeInfo = TweenInfo.new(Library.Animation.Time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            fadeInfo = TweenInfo.new(Library.Animation.Time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end
 
         local NewTween = Library:Tween({
-            [Property] = Visibility and OldTransparency or 1
-        }, FadeInfo, Object)
+            [Property] = Visibility and baseTransparency or 1
+        }, fadeInfo, Object)
 
-        Library:Connect(NewTween.Completed, function()
+        local currentState = { base = baseTransparency, tween = NewTween }
+        objectStates[Property] = currentState
+
+        Library:Connect(NewTween.Completed, function(playbackState)
+            if playbackState ~= Enum.PlaybackState.Completed or objectStates[Property] ~= currentState then
+                return
+            end
+
             if not Visibility then
                 task.wait()
-                Object[Property] = OldTransparency
+                if objectStates[Property] == currentState then
+                    Object[Property] = baseTransparency
+                end
             end
         end)
 
@@ -440,14 +472,29 @@ do
     end
 
     Library.FadeDescendants = function(Self, Visibility, Callback)
+        local rootInstance = Self.Instance
+        local wantedVisibility = Visibility and true or false
+
+        if fadeTargets[rootInstance] == wantedVisibility and rootInstance.Visible == wantedVisibility then
+            if Callback and type(Callback) == "function" then
+                Callback()
+            end
+            return
+        end
+
+        fadeTargets[rootInstance] = wantedVisibility
+
+        local generation = (fadeGenerations[rootInstance] or 0) + 1
+        fadeGenerations[rootInstance] = generation
+
         if Visibility then
-            Self.Instance.Visible = true
+            rootInstance.Visible = true
         end
 
         local NewTween
 
-        local Children = Self.Instance:GetDescendants()
-        table.insert(Children, Self.Instance)
+        local Children = rootInstance:GetDescendants()
+        table.insert(Children, rootInstance)
 
         for _, Child in Children do
             local TransparencyProperty = Library:GetTweenProperty(Child)
@@ -465,12 +512,25 @@ do
             end
         end
 
-        Library:Connect(NewTween.Completed, function()
+        local function finish()
+            if fadeGenerations[rootInstance] ~= generation then
+                return
+            end
+
             if Callback and type(Callback) == "function" then
                 Callback()
             end
 
-            Self.Instance.Visible = Visibility
+            rootInstance.Visible = Visibility
+        end
+
+        if not NewTween then
+            finish()
+            return
+        end
+
+        Library:Connect(NewTween.Completed, function()
+            finish()
         end)
     end
 
@@ -4971,8 +5031,11 @@ do
         end
 
         Library.InventoryViewer = function(Self, Params)
+            Params = Params or {}
+
             local Viewer = {
                 Visible = true,
+                Mode = Params.Mode == "Text" and "Text" or "Image",
                 Entries = {},
                 Sections = {},
                 Columns = 4,
@@ -5143,6 +5206,27 @@ do
                 Items["InventoryViewer"]:FadeDescendants(Viewer.Visible)
             end
 
+            local function applyEntryMode(entry)
+                local isTextMode = Viewer.Mode == "Text"
+                entry.Image.Instance.Visible = not isTextMode
+
+                if isTextMode then
+                    entry.Name.Instance.Position = UDim2.new(0, 4, 0, 4)
+                    entry.Name.Instance.Size = UDim2.new(1, -8, 1, -20)
+                    entry.Name.Instance.TextXAlignment = Enum.TextXAlignment.Center
+                    entry.Name.Instance.TextYAlignment = Enum.TextYAlignment.Center
+                    entry.Name.Instance.TextWrapped = true
+                    entry.Name.Instance.TextTruncate = Enum.TextTruncate.None
+                else
+                    entry.Name.Instance.Position = UDim2.new(0, 4, 1, -22)
+                    entry.Name.Instance.Size = UDim2.new(1, -8, 0, 12)
+                    entry.Name.Instance.TextXAlignment = Enum.TextXAlignment.Left
+                    entry.Name.Instance.TextYAlignment = Enum.TextYAlignment.Center
+                    entry.Name.Instance.TextWrapped = false
+                    entry.Name.Instance.TextTruncate = Enum.TextTruncate.AtEnd
+                end
+            end
+
             local function RecalculateLayout()
                 local Holder = Items["Holder"].Instance
                 local Columns = math.max(math.floor(Viewer.Columns or 4), 1)
@@ -5307,6 +5391,8 @@ do
                     BorderSizePixel = 0
                 }):AddToTheme({ TextColor3 = "Accent" })
 
+                applyEntryMode(Entry)
+
                 Viewer.Entries[#Viewer.Entries + 1] = Entry
                 Section.Entries[#Section.Entries + 1] = Entry
                 return Entry
@@ -5414,8 +5500,20 @@ do
             end)
 
             function Viewer:SetVisibility(Bool)
-                Viewer.Visible = Bool and true or false
+                local isVisible = Bool and true or false
+                if Viewer.Visible == isVisible then
+                    return
+                end
+
+                Viewer.Visible = isVisible
                 ApplyVisibility()
+            end
+
+            function Viewer:SetMode(mode)
+                Viewer.Mode = mode == "Text" and "Text" or "Image"
+                for _, entry in ipairs(Viewer.Entries) do
+                    applyEntryMode(entry)
+                end
             end
 
             function Viewer:Center()
@@ -9668,9 +9766,12 @@ do
                     SettingsHolder.Size = UDim2.new(0, popupWidth, 0, popupHeight)
                 end
 
-                SettingsItems["Layout"]:Connect("Changed", function(property)
-                    if property == "AbsoluteContentSize" then
+                Library:Connect(SettingsItems["Layout"].Instance:GetPropertyChangedSignal("AbsoluteContentSize"), fitToContent)
+
+                SettingsItems["ToggleSettings"]:Connect("AncestryChanged", function()
+                    if SettingsHolder.Parent == Library.Holder.Instance then
                         fitToContent()
+                        task.defer(fitToContent)
                     end
                 end)
 
