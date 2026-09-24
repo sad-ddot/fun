@@ -2827,7 +2827,7 @@ do
             end
 
             function Watermark:SetVisibility(Bool)
-                Items["Watermark"].Instance.Visible = Bool
+                Items["Watermark"]:FadeDescendants(Bool)
             end
 
             function Watermark:Center()
@@ -3014,7 +3014,7 @@ do
             end
 
             function KeybindList:SetVisibility(Bool)
-                Items["KeybindList"].Instance.Visible = Bool
+                Items["KeybindList"]:FadeDescendants(Bool)
             end
 
             function KeybindList:Center()
@@ -3048,12 +3048,19 @@ do
                     NewKey.Instance.Text = Key .. " - " .. Name .. " - " .. Mode
                 end
 
+                local LastStatus = nil
+
                 function NewKey:SetStatus(Bool)
                     if not CanShowInKeybindsList then
                         Bool = false
                     end
 
-                    NewKey.Instance.Visible = Bool
+                    if Bool == LastStatus then
+                        return
+                    end
+                    LastStatus = Bool
+
+                    NewKey:FadeDescendants(Bool)
                 end
 
                 function NewKey:SetVis(Bool)
@@ -3312,7 +3319,7 @@ do
 
             local IsVisible = true
             local ApplyVisibility = function(IsWindowOpen)
-                Items["ESPPreview"].Instance.Visible = IsVisible and IsWindowOpen
+                Items["ESPPreview"]:FadeDescendants(IsVisible and IsWindowOpen)
             end
 
             Library:BindToWindowVisibility(ApplyVisibility)
@@ -3638,7 +3645,7 @@ do
 
             local IsVisible = true
             local ApplyVisibility = function()
-                Items["ModeratorList"].Instance.Visible = IsVisible
+                Items["ModeratorList"]:FadeDescendants(IsVisible)
             end
 
             local UpdateCanvas = function()
@@ -3965,7 +3972,7 @@ do
 
             local IsVisible = true
             local ApplyVisibility = function(IsWindowOpen)
-                Items["CallLogger"].Instance.Visible = IsVisible and IsWindowOpen
+                Items["CallLogger"]:FadeDescendants(IsVisible and IsWindowOpen)
             end
 
             Library:BindToWindowVisibility(ApplyVisibility)
@@ -4251,7 +4258,7 @@ do
             end
 
             local function ApplyVisibility()
-                Items["RadarWidget"].Instance.Visible = Radar.Visible
+                Items["RadarWidget"]:FadeDescendants(Radar.Visible)
             end
 
             local function CreateEntry(Key)
@@ -4526,7 +4533,7 @@ do
             local BoundHumanoid = nil
 
             function Indicator:SetVisibility(Bool)
-                Items["TargetIndicator"].Instance.Visible = Bool
+                Items["TargetIndicator"]:FadeDescendants(Bool)
             end
 
             function Indicator:Center()
@@ -4755,7 +4762,7 @@ do
 
             function Widget:SetVisibility(Bool)
                 Widget.Visible = Bool and true or false
-                Items["ChargeShotWidget"].Instance.Visible = Widget.Visible
+                Items["ChargeShotWidget"]:FadeDescendants(Widget.Visible)
             end
 
             function Widget:Center()
@@ -4904,7 +4911,7 @@ do
             end
 
             local function ApplyVisibility()
-                Items["StatListWidget"].Instance.Visible = Widget.Visible
+                Items["StatListWidget"]:FadeDescendants(Widget.Visible)
             end
 
             Library:BindToWindowVisibility(ApplyVisibility)
@@ -5125,7 +5132,7 @@ do
             end
 
             local function ApplyVisibility()
-                Items["InventoryViewer"].Instance.Visible = Viewer.Visible
+                Items["InventoryViewer"]:FadeDescendants(Viewer.Visible)
             end
 
             local function RecalculateLayout()
@@ -6546,8 +6553,8 @@ do
             end
 
             local function ApplyVisibility()
-                Items["SpotifyPlayer"].Instance.Visible = IsVisible
-                if Items["SpotifyPlayer"].Instance.Visible then
+                Items["SpotifyPlayer"]:FadeDescendants(IsVisible)
+                if IsVisible then
                     NotifyEmptyToken()
                 end
             end
@@ -7162,7 +7169,7 @@ do
 
             function Playerlist:SetVisibility(Bool)
                 Playerlist.Visible = Bool
-                Items["Playerlist"].Instance.Visible = Bool and Library.WindowOpenState
+                Items["Playerlist"]:FadeDescendants(Bool and Library.WindowOpenState)
             end
 
             function Playerlist:Center()
@@ -7212,7 +7219,7 @@ do
 
             Playerlist.Visible = true
             Library:BindToWindowVisibility(function(IsWindowOpen)
-                Items["Playerlist"].Instance.Visible = Playerlist.Visible and IsWindowOpen
+                Items["Playerlist"]:FadeDescendants(Playerlist.Visible and IsWindowOpen)
             end)
 
             Library:Connect(Items["Content"].Instance.ChildAdded, function()
@@ -7849,7 +7856,7 @@ do
                 Debounce = true
 
                 Window.IsOpen = Bool
-                Items["Header"].Instance.Visible = Bool
+                Items["Header"]:FadeDescendants(Bool)
                 Library:SetWindowVisibilityState(Bool)
                 Library:SetBackgroundEffectsVisible(Bool)
                 UpdateDockState()
