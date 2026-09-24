@@ -10,7 +10,7 @@
 
 -- hi guys 
 -- im gay
--- nigasense
+-- dihhax on top
 
 if getgenv().Library and getgenv().Library.Exit then
     getgenv().Library:Exit()
