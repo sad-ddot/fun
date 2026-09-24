@@ -429,7 +429,7 @@ do
         local currentState = { base = baseTransparency, tween = NewTween, settled = false }
         objectStates[Property] = currentState
 
-        Library:Connect(NewTween.Completed, function(playbackState)
+        NewTween.Completed:Once(function(playbackState)
             if playbackState ~= Enum.PlaybackState.Completed or objectStates[Property] ~= currentState then
                 return
             end
@@ -506,7 +506,7 @@ do
             return
         end
 
-        Library:Connect(NewTween.Completed, function()
+        NewTween.Completed:Once(function()
             finish()
         end)
     end
@@ -1014,7 +1014,7 @@ do
                     })
 
                 FallTween:Play()
-                Library:Connect(FallTween.Completed, function()
+                FallTween.Completed:Once(function()
                     if Image and Image.Parent then
                         Image:Destroy()
                     end
