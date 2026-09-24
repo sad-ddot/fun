@@ -420,9 +420,14 @@ do
         local OldTransparency = Object[Property]
         Object[Property] = Visibility and 1 or OldTransparency
 
+        local FadeInfo = nil
+        if not Visibility then
+            FadeInfo = TweenInfo.new(Library.Animation.Time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        end
+
         local NewTween = Library:Tween({
             [Property] = Visibility and OldTransparency or 1
-        }, nil, Object)
+        }, FadeInfo, Object)
 
         Library:Connect(NewTween.Completed, function()
             if not Visibility then
