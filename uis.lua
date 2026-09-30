@@ -3122,6 +3122,188 @@ do
             return KeybindList
         end
 
+        Library.ItemFinder = function(Self, Params)
+            Params = Params or {}
+            local ItemFinder = { Visible = false, Rows = {} }
+
+            local Items = {}
+            do
+                Items["ItemFinder"] = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = Library.Holder.Instance,
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Position = UDim2.new(1, -10, 0.5, 0),
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(0, 180, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundColor3 = Library.Theme["Background"]
+                }):AddToTheme({ BackgroundColor3 = 'Background' })
+
+                Items["ItemFinder"]:MakeDraggable()
+
+                Library:Create("UIStroke", {
+                    Name = "\0",
+                    Parent = Items["ItemFinder"].Instance,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    Color = Library.Theme["Outline"]
+                }):AddToTheme({ Color = 'Outline' })
+
+                Library:Create("UIStroke", {
+                    Name = "\0",
+                    Parent = Items["ItemFinder"].Instance,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    Color = Library.Theme["Border"],
+                    BorderOffset = UDim.new(0, 1)
+                }):AddToTheme({ Color = 'Border' })
+
+                Items["Text"] = Library:Create("TextLabel", {
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextSize = Library.FontSize,
+                    Parent = Items["ItemFinder"].Instance,
+                    TextColor3 = Library.Theme["Text"],
+                    Text = Params.Name or "Item Finder",
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 15),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BorderSizePixel = 0
+                }):AddToTheme({ TextColor3 = 'Text' })
+
+                Items["AccentLiner"] = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = Items["ItemFinder"].Instance,
+                    Position = UDim2.new(0, -8, 0, 17),
+                    Size = UDim2.new(1, 16, 0, 1),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = Library.Theme["Accent"]
+                }):AddToTheme({ BackgroundColor3 = 'Accent' })
+
+                Items["Content"] = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = Items["ItemFinder"].Instance,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 22),
+                    Size = UDim2.new(1, 0, 0, 0),
+                    BorderSizePixel = 0,
+                    AutomaticSize = Enum.AutomaticSize.Y
+                })
+
+                Library:Create("UIListLayout", {
+                    Name = "\0",
+                    Parent = Items["Content"].Instance,
+                    Padding = UDim.new(0, 2),
+                    SortOrder = Enum.SortOrder.LayoutOrder
+                })
+
+                Library:Create("UIPadding", {
+                    Name = "\0",
+                    Parent = Items["ItemFinder"].Instance,
+                    PaddingTop = UDim.new(0, 4),
+                    PaddingBottom = UDim.new(0, 26),
+                    PaddingRight = UDim.new(0, 8),
+                    PaddingLeft = UDim.new(0, 8)
+                })
+
+                Items["Empty"] = Library:Create("TextLabel", {
+                    Name = "\0",
+                    FontFace = Library.Font,
+                    TextSize = Library.FontSize,
+                    Parent = Items["Content"].Instance,
+                    TextColor3 = Library.Theme["Inactive Text"],
+                    Text = "Nothing found",
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 15),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    LayoutOrder = 0,
+                    BorderSizePixel = 0
+                }):AddToTheme({ TextColor3 = 'Inactive Text' })
+            end
+
+            local function RowText(Row)
+                if type(Row) == "table" then
+                    return tostring(Row.Text or Row.Name or "")
+                end
+                return tostring(Row)
+            end
+
+            function ItemFinder:SetVisibility(Bool)
+                ItemFinder.Visible = Bool
+                Items["ItemFinder"]:FadeDescendants(Bool)
+            end
+
+            function ItemFinder:Center()
+                local AbsPos = Items["ItemFinder"].Instance.AbsolutePosition
+                Items["ItemFinder"].Instance.AnchorPoint = Vector2.new(0, 0)
+                task.wait()
+                Items["ItemFinder"].Instance.Position = UDim2.new(0, AbsPos.X, 0, AbsPos.Y + GuiInset)
+            end
+
+            function ItemFinder:SetPosition(Position)
+                Items["ItemFinder"].Instance.AnchorPoint = Vector2.new(0, 0)
+                Items["ItemFinder"].Instance.Position = Position
+            end
+
+            function ItemFinder:GetBounds()
+                local Frame = Items["ItemFinder"].Instance
+                return Frame.AbsolutePosition, Frame.AbsoluteSize
+            end
+
+            function ItemFinder:SetText(Text)
+                Items["Text"].Instance.Text = Text
+            end
+
+            function ItemFinder:Clear()
+                ItemFinder:Refresh({})
+            end
+
+            function ItemFinder:Refresh(List)
+                List = List or {}
+                local Rows = ItemFinder.Rows
+
+                for Index = 1, #List do
+                    local Text = RowText(List[Index])
+                    local Row = Rows[Index]
+                    if not Row then
+                        Row = Library:Create("TextLabel", {
+                            Name = "\0",
+                            FontFace = Library.Font,
+                            TextSize = Library.FontSize,
+                            Parent = Items["Content"].Instance,
+                            TextColor3 = Library.Theme["Text"],
+                            Text = "",
+                            BackgroundTransparency = 1,
+                            Size = UDim2.new(1, 0, 0, 15),
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                            TextTruncate = Enum.TextTruncate.AtEnd,
+                            LayoutOrder = Index,
+                            BorderSizePixel = 0
+                        }):AddToTheme({ TextColor3 = 'Text' })
+                        Rows[Index] = Row
+                    end
+                    if Row.Instance.Text ~= Text then
+                        Row.Instance.Text = Text
+                    end
+                    Row.Instance.Visible = true
+                end
+
+                for Index = #List + 1, #Rows do
+                    Rows[Index].Instance.Visible = false
+                end
+
+                Items["Empty"].Instance.Visible = #List == 0
+            end
+
+            ItemFinder.Items = Items
+
+            Library:RegisterLayout("ItemFinder", {
+                Instance = Items["ItemFinder"].Instance
+            })
+
+            return ItemFinder
+        end
+
         Library.Notification = function(Self, Name, Duration, Color)
             local Items = {}
             do
@@ -5273,8 +5455,39 @@ do
                 table.clear(Viewer.Sections)
             end
 
+            local ContentProvider = game:GetService("ContentProvider")
+            local PreloadedImages = {}
+
+            local function ResolveImage(Value)
+                if type(Value) == "number" then
+                    Value = tostring(math.floor(Value))
+                end
+                if type(Value) ~= "string" or Value == "" then
+                    return nil
+                end
+                if string.match(Value, "^%d+$") then
+                    return "rbxassetid://" .. Value
+                end
+                local Id = string.match(Value, "[?&]id=(%d+)")
+                if Id and not string.find(Value, "^rbxasset") then
+                    return "rbxassetid://" .. Id
+                end
+                return Value
+            end
+
+            local function PreloadImage(ImageLabel, Image)
+                if PreloadedImages[Image] then
+                    return
+                end
+                PreloadedImages[Image] = true
+                task.spawn(function()
+                    pcall(ContentProvider.PreloadAsync, ContentProvider, { ImageLabel })
+                end)
+            end
+
             local function CreateEntry(Section, Data)
                 local Entry = {}
+                local Image = ResolveImage(Data.Image or Data.Icon)
                 local Amount = tonumber(Data.Amount) or 1
                 local AmountText = Amount > 1 and ("x" .. tostring(math.floor(Amount + 0.5))) or ""
 
@@ -5305,7 +5518,7 @@ do
                 Entry.Image = Library:Create("ImageLabel", {
                     Name = "\0",
                     Parent = Entry.Frame.Instance,
-                    Image = Data.Image or "rbxasset://textures/ui/GuiImagePlaceholder.png",
+                    Image = Image or "rbxasset://textures/ui/GuiImagePlaceholder.png",
                     AnchorPoint = Vector2.new(0.5, 0),
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0.5, 0, 0, 6),
@@ -5314,6 +5527,9 @@ do
                 })
 
                 Entry.Image.Instance.ScaleType = Enum.ScaleType.Fit
+                if Image then
+                    PreloadImage(Entry.Image.Instance, Image)
+                end
 
                 Entry.Name = Library:Create("TextLabel", {
                     Name = "\0",
