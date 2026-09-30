@@ -9273,14 +9273,11 @@ do
                 Page.Items = Items
             end
 
-            local Debounce = false
 
             function Page:Turn(Bool)
-                if Debounce then
+                if Page.Active == Bool and Items["Page"].Instance.Visible == Bool then
                     return
                 end
-
-                Debounce = true
 
                 Page.Active = Bool
 
@@ -9297,11 +9294,10 @@ do
                 end
 
                 Items["Page"]:FadeDescendants(Bool, function()
-                    Debounce = false
-
-                    if Items["Page"].Instance.Visible then
+                    if Page.Active then
                         Items["Page"].Instance.Parent = Page.Window.Items["Content"].Instance
                     else
+                        Items["Page"].Instance.Visible = false
                         Items["Page"].Instance.Parent = Library.UnusedHolder.Instance
                     end
                 end)
@@ -9431,16 +9427,13 @@ do
                 Page.Items = Items
             end
 
-            local Debounce = false
 
             function Page:Turn(Bool)
-                if Debounce then
+                if Page.Active == Bool and Items["Page"].Instance.Visible == Bool then
                     return
                 end
 
                 Page.Active = Bool
-
-                Debounce = true
 
                 if Bool then
                     Items["Inactive"]:ChangeItemTheme({ TextColor3 = "Accent" })
@@ -9455,11 +9448,10 @@ do
                 end
 
                 Items["Page"]:FadeDescendants(Bool, function()
-                    Debounce = false
-
-                    if Items["Page"].Instance.Visible then
+                    if Page.Active then
                         Items["Page"].Instance.Parent = Page.Page.Items["Columns"].Instance
                     else
+                        Items["Page"].Instance.Visible = false
                         Items["Page"].Instance.Parent = Library.UnusedHolder.Instance
                     end
                 end)
@@ -10758,6 +10750,50 @@ do
 
                 for Index, Value in List do
                     Dropdown:Add(Value)
+                end
+
+                if Dropdown.Multi then
+                    if type(Dropdown.Value) ~= "table" then
+                        return
+                    end
+
+                    local Kept = {}
+                    for Index, Value in Dropdown.Value do
+                        local OptionData = Dropdown.Options[Value]
+                        if OptionData then
+                            Kept[#Kept + 1] = Value
+                            OptionData.IsSelected = true
+                            OptionData:ToggleState("Active")
+                        end
+                    end
+
+                    if #Kept ~= #Dropdown.Value then
+                        Dropdown.Value = Kept
+                        Flags[Dropdown.Flag] = Kept
+                        Items["Value"].Instance.Text = table.concat(Kept, ", ")
+                        Library:SafeCall(Dropdown.Callback, Kept)
+                    end
+                    return
+                end
+
+                local Current = Dropdown.Value
+                if Current ~= nil and Dropdown.Options[Current] then
+                    Dropdown.Options[Current].Selected = true
+                    Dropdown.Options[Current]:ToggleState("Active")
+                    return
+                end
+
+                if Current == nil then
+                    return
+                end
+
+                if List[1] ~= nil then
+                    Dropdown:Set(List[1])
+                else
+                    Dropdown.Value = nil
+                    Flags[Dropdown.Flag] = nil
+                    Items["Value"].Instance.Text = ""
+                    Library:SafeCall(Dropdown.Callback, nil)
                 end
             end
 
