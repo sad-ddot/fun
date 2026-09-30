@@ -9292,6 +9292,10 @@ do
                     Items["Text"]:Tween({ TextColor3 = Library.Theme.Text })
                 end
 
+                if Bool then
+                    Items["Page"].Instance.Parent = Page.Window.Items["Content"].Instance
+                end
+
                 Items["Page"]:FadeDescendants(Bool, function()
                     Debounce = false
 
@@ -9444,6 +9448,10 @@ do
                 else
                     Items["Inactive"]:ChangeItemTheme({ TextColor3 = "Text" })
                     Items["Inactive"]:Tween({ TextColor3 = Library.Theme.Text })
+                end
+
+                if Bool then
+                    Items["Page"].Instance.Parent = Page.Page.Items["Columns"].Instance
                 end
 
                 Items["Page"]:FadeDescendants(Bool, function()
@@ -11852,41 +11860,37 @@ do
                         end
                     })
 
-                    ConfigsSection:Button({
+                    local DeleteArmed = nil
+                    local DeleteButton
+                    DeleteButton = ConfigsSection:Button({
                         Name = "Delete",
                         Callback = function()
-                            if ConfigSelected then
-                                if isfile(ConfigsFolder .. ConfigSelected .. ".json") then
-                                    local SelectedConfig = ConfigSelected
-
-                                    Library:OpenConfirmDialog({
-                                        Title = "Delete config",
-                                        Message = string.format(
-                                            'Delete "%s"? This permanently removes the file from your config folder.',
-                                            SelectedConfig),
-                                        ConfirmText = "Delete",
-                                        CancelText = "Keep",
-                                        AccentColor = Color3.fromRGB(255, 95, 95),
-                                        Callback = function(Confirmed)
-                                            if not Confirmed then
-                                                return
-                                            end
-
-                                            if not isfile(ConfigsFolder .. SelectedConfig .. ".json") then
-                                                Library:Notification("Config no longer exists", 3,
-                                                    Color3.fromRGB(255, 0, 0))
-                                                return
-                                            end
-
-                                            delfile(ConfigsFolder .. SelectedConfig .. ".json")
-                                            ConfigSelected = nil
-                                            Library:GetConfigsList(ConfigsDropdown)
-                                            Library:Notification("Succesfully deleted config", 3,
-                                                Color3.fromRGB(0, 255, 0))
-                                        end
-                                    })
-                                end
+                            if not ConfigSelected or not isfile(ConfigsFolder .. ConfigSelected .. ".json") then
+                                return
                             end
+
+                            if DeleteArmed ~= ConfigSelected then
+                                local Token = {}
+                                DeleteArmed = ConfigSelected
+                                DeleteButton.ArmToken = Token
+                                DeleteButton:SetText("Are you sure?")
+                                task.delay(3, function()
+                                    if DeleteButton.ArmToken == Token then
+                                        DeleteArmed = nil
+                                        DeleteButton.ArmToken = nil
+                                        DeleteButton:SetText("Delete")
+                                    end
+                                end)
+                                return
+                            end
+
+                            DeleteArmed = nil
+                            DeleteButton.ArmToken = nil
+                            DeleteButton:SetText("Delete")
+                            delfile(ConfigsFolder .. ConfigSelected .. ".json")
+                            ConfigSelected = nil
+                            Library:GetConfigsList(ConfigsDropdown)
+                            Library:Notification("Succesfully deleted config", 3, Color3.fromRGB(0, 255, 0))
                         end
                     })
 
