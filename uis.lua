@@ -1272,7 +1272,7 @@ do
         return Success, Result
     end
 
-    Library.GetConfigsList = function(Self, Element)
+    Library.GetConfigsList = function(Self, Element, Exclude)
         local List = {}
         local ReturnList = {}
 
@@ -1292,7 +1292,10 @@ do
                 end
 
                 if Character == "/" or Character == "\\" then
-                    table.insert(ReturnList, File:sub(Position + 1, StartPosition - 1))
+                    local Name = File:sub(Position + 1, StartPosition - 1)
+                    if Name ~= Exclude and isfile(File) then
+                        table.insert(ReturnList, Name)
+                    end
                 end
             end
         end
@@ -11923,9 +11926,10 @@ do
                             DeleteArmed = nil
                             DeleteButton.ArmToken = nil
                             DeleteButton:SetText("Delete")
-                            delfile(ConfigsFolder .. ConfigSelected .. ".json")
+                            local Deleted = ConfigSelected
+                            delfile(ConfigsFolder .. Deleted .. ".json")
                             ConfigSelected = nil
-                            Library:GetConfigsList(ConfigsDropdown)
+                            Library:GetConfigsList(ConfigsDropdown, Deleted)
                             Library:Notification("Succesfully deleted config", 3, Color3.fromRGB(0, 255, 0))
                         end
                     })
