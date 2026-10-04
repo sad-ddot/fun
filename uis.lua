@@ -3549,52 +3549,144 @@ do
             Overlay.Size = UDim2.fromScale(1, 1)
             Overlay.ZIndex = 20
             Overlay.Parent = Items["Background"].Instance
+
+            local BoxFill = Instance.new("Frame")
+            BoxFill.BackgroundColor3 = Color3.new(1, 1, 1)
+            BoxFill.BackgroundTransparency = 0.85
+            BoxFill.BorderSizePixel = 0
+            BoxFill.Visible = false
+            BoxFill.ZIndex = 20
+            BoxFill.Parent = Overlay
+
+            local BoxOutline = Instance.new("Frame")
+            BoxOutline.BackgroundTransparency = 1
+            BoxOutline.BorderSizePixel = 0
+            BoxOutline.Visible = false
+            BoxOutline.ZIndex = 21
+            BoxOutline.Parent = Overlay
+            local BoxOutlineStroke = Instance.new("UIStroke")
+            BoxOutlineStroke.Thickness = 3
+            BoxOutlineStroke.Color = Color3.new(0, 0, 0)
+            BoxOutlineStroke.LineJoinMode = Enum.LineJoinMode.Miter
+            BoxOutlineStroke.Parent = BoxOutline
+
             local Box = Instance.new("Frame")
             Box.BackgroundTransparency = 1
             Box.BorderSizePixel = 0
-            Box.Position = UDim2.new(0.5, -55, 0.5, -100)
-            Box.Size = UDim2.fromOffset(110, 200)
             Box.Visible = false
-            Box.ZIndex = 21
+            Box.ZIndex = 22
             Box.Parent = Overlay
             local BoxStroke = Instance.new("UIStroke")
             BoxStroke.Thickness = 1
             BoxStroke.Color = Color3.new(1, 1, 1)
+            BoxStroke.LineJoinMode = Enum.LineJoinMode.Miter
             BoxStroke.Parent = Box
-            local function previewLabel(text, position, size)
+
+            local function previewLabel(text, size)
                 local label = Instance.new("TextLabel")
                 label.BackgroundTransparency = 1
-                label.Position = position
                 label.Size = size
                 label.FontFace = Library.Font
                 label.TextSize = Library.FontSize
                 label.TextColor3 = Color3.new(1, 1, 1)
                 label.TextStrokeTransparency = 0
+                label.TextStrokeColor3 = Color3.new(0, 0, 0)
                 label.Text = text
+                label.TextXAlignment = Enum.TextXAlignment.Center
                 label.Visible = false
-                label.ZIndex = 22
+                label.ZIndex = 30
                 label.Parent = Overlay
                 return label
             end
-            local NameLabel = previewLabel("Player", UDim2.new(0.5, -70, 0.5, -118), UDim2.fromOffset(140, 16))
-            local DistanceLabel = previewLabel("120 studs", UDim2.new(0.5, -70, 0.5, 103), UDim2.fromOffset(140, 16))
-            local WeaponLabel = previewLabel("Salvaged AK47", UDim2.new(0.5, -70, 0.5, 119), UDim2.fromOffset(140, 16))
+
+            local NameLabel = previewLabel("Player", UDim2.fromOffset(180, 16))
+            local DisplayNameLabel = previewLabel("Display Name", UDim2.fromOffset(180, 16))
+            local DistanceLabel = previewLabel("120 studs", UDim2.fromOffset(180, 16))
+            local WeaponLabel = previewLabel("Salvaged AK47", UDim2.fromOffset(180, 16))
+            local KDLabel = previewLabel("KD 1.0", UDim2.fromOffset(90, 16))
+            KDLabel.TextXAlignment = Enum.TextXAlignment.Left
+            local WeaponIcon = Instance.new("ImageLabel")
+            WeaponIcon.BackgroundTransparency = 1
+            WeaponIcon.BorderSizePixel = 0
+            WeaponIcon.Size = UDim2.fromOffset(22, 22)
+            WeaponIcon.ScaleType = Enum.ScaleType.Fit
+            WeaponIcon.Visible = false
+            WeaponIcon.ZIndex = 30
+            WeaponIcon.Parent = Overlay
+            local HealthText = previewLabel("100", UDim2.fromOffset(40, 14))
+            HealthText.TextXAlignment = Enum.TextXAlignment.Right
+
             local HealthBack = Instance.new("Frame")
             HealthBack.BackgroundColor3 = Color3.new(0, 0, 0)
             HealthBack.BorderSizePixel = 0
-            HealthBack.Position = UDim2.new(0.5, -62, 0.5, -100)
-            HealthBack.Size = UDim2.fromOffset(5, 200)
             HealthBack.Visible = false
-            HealthBack.ZIndex = 22
+            HealthBack.ZIndex = 24
             HealthBack.Parent = Overlay
+            local HealthInner = Instance.new("Frame")
+            HealthInner.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            HealthInner.BorderSizePixel = 0
+            HealthInner.Position = UDim2.fromOffset(1, 1)
+            HealthInner.Size = UDim2.new(1, -2, 1, -2)
+            HealthInner.ClipsDescendants = true
+            HealthInner.ZIndex = 25
+            HealthInner.Parent = HealthBack
             local HealthFill = Instance.new("Frame")
             HealthFill.AnchorPoint = Vector2.new(0, 1)
             HealthFill.Position = UDim2.fromScale(0, 1)
-            HealthFill.Size = UDim2.fromScale(1, 0.76)
+            HealthFill.Size = UDim2.fromScale(1, 1)
             HealthFill.BorderSizePixel = 0
-            HealthFill.BackgroundColor3 = Color3.fromRGB(80, 255, 120)
-            HealthFill.ZIndex = 23
-            HealthFill.Parent = HealthBack
+            HealthFill.BackgroundColor3 = Color3.new(1, 1, 1)
+            HealthFill.ZIndex = 26
+            HealthFill.Parent = HealthInner
+            local HealthGradient = Instance.new("UIGradient")
+            HealthGradient.Rotation = 90
+            HealthGradient.Color = ColorSequence.new(Color3.fromRGB(80, 255, 120), Color3.fromRGB(255, 70, 70))
+            HealthGradient.Parent = HealthFill
+
+            local function lineObject(z)
+                local outer = Instance.new("Frame")
+                outer.AnchorPoint = Vector2.new(0.5, 0.5)
+                outer.BackgroundColor3 = Color3.new(0, 0, 0)
+                outer.BorderSizePixel = 0
+                outer.Visible = false
+                outer.ZIndex = z
+                outer.Parent = Overlay
+                local inner = Instance.new("Frame")
+                inner.AnchorPoint = Vector2.new(0.5, 0.5)
+                inner.BackgroundColor3 = Color3.new(1, 1, 1)
+                inner.BorderSizePixel = 0
+                inner.Visible = false
+                inner.ZIndex = z + 1
+                inner.Parent = Overlay
+                return { Outer = outer, Inner = inner }
+            end
+
+            local CornerLines = {}
+            for Index = 1, 8 do CornerLines[Index] = lineObject(22) end
+            local Box3DLines = {}
+            for Index = 1, 12 do Box3DLines[Index] = lineObject(22) end
+            local SkeletonLines = {}
+            for Index = 1, 14 do SkeletonLines[Index] = lineObject(27) end
+            local TracerLine = lineObject(27)
+
+            local BoxVisible = false
+            local BoxColor = Color3.new(1, 1, 1)
+            local BoxType = "Default"
+            local BoxFillVisible = false
+            local BoxFillColor = Color3.new(1, 1, 1)
+            local HealthVisible = false
+            local HealthTarget = 1
+            local HealthDisplay = 1
+            local HealthTop = Color3.fromRGB(80, 255, 120)
+            local HealthBottom = Color3.fromRGB(255, 70, 70)
+            local HealthCounterVisible = true
+            local HealthAuto = true
+            local HealthDirection = -1
+            local HealthPause = 0
+            local SkeletonVisible = false
+            local SkeletonColor = Color3.new(1, 1, 1)
+            local TracerVisible = false
+            local TracerColor = Color3.new(1, 1, 1)
 
             AlignPreviewToWindow(Items["ESPPreview"].Instance)
 
@@ -3619,24 +3711,59 @@ do
                 Items["Text"].Instance.Text = Text
             end
 
-            function Preview:SetBox(Visible, Color)
-                Box.Visible = Visible == true
-                if typeof(Color) == "Color3" then BoxStroke.Color = Color end
+            function Preview:SetBox(Visible, Color, FillVisible, FillColor, Type)
+                BoxVisible = Visible == true
+                if typeof(Color) == "Color3" then BoxColor = Color end
+                if type(FillVisible) == "string" then
+                    BoxType = FillVisible
+                else
+                    BoxFillVisible = FillVisible == true
+                end
+                if typeof(FillColor) == "Color3" then BoxFillColor = FillColor end
+                if type(Type) == "string" then BoxType = Type end
             end
 
-            function Preview:SetName(Visible, Color, Text)
+            function Preview:SetBoxType(Type)
+                if type(Type) == "string" then BoxType = Type end
+            end
+
+            function Preview:SetBoxFill(Visible, Color, Transparency)
+                BoxFillVisible = Visible == true
+                if typeof(Color) == "Color3" then BoxFillColor = Color end
+                if tonumber(Transparency) then BoxFill.BackgroundTransparency = math.clamp(tonumber(Transparency), 0, 1) end
+            end
+
+            function Preview:SetName(Visible, Color, Text, DisplayVisible, DisplayColor, DisplayText)
                 NameLabel.Visible = Visible == true
                 if typeof(Color) == "Color3" then NameLabel.TextColor3 = Color end
                 if Text ~= nil then NameLabel.Text = tostring(Text) end
+                DisplayNameLabel.Visible = DisplayVisible == true
+                if typeof(DisplayColor) == "Color3" then DisplayNameLabel.TextColor3 = DisplayColor end
+                if DisplayText ~= nil then DisplayNameLabel.Text = tostring(DisplayText) end
             end
 
-            function Preview:SetHealth(Visible, Ratio, TopColor, BottomColor)
-                HealthBack.Visible = Visible == true
-                local value = math.clamp(tonumber(Ratio) or 1, 0, 1)
-                HealthFill.Size = UDim2.fromScale(1, value)
-                if typeof(TopColor) == "Color3" and typeof(BottomColor) == "Color3" then
-                    HealthFill.BackgroundColor3 = BottomColor:Lerp(TopColor, value)
-                end
+            function Preview:SetDisplayName(Visible, Color, Text)
+                DisplayNameLabel.Visible = Visible == true
+                if typeof(Color) == "Color3" then DisplayNameLabel.TextColor3 = Color end
+                if Text ~= nil then DisplayNameLabel.Text = tostring(Text) end
+            end
+
+            function Preview:SetHealth(Visible, Ratio, TopColor, BottomColor, CounterVisible)
+                HealthVisible = Visible == true
+                HealthTarget = math.clamp(tonumber(Ratio) or HealthTarget, 0, 1)
+                if typeof(TopColor) == "Color3" then HealthTop = TopColor end
+                if typeof(BottomColor) == "Color3" then HealthBottom = BottomColor end
+                if CounterVisible ~= nil then HealthCounterVisible = CounterVisible == true end
+                HealthGradient.Color = ColorSequence.new(HealthTop, HealthBottom)
+            end
+
+            function Preview:SetHealthCounter(Visible)
+                HealthCounterVisible = Visible == true
+            end
+
+            function Preview:SetAutoHealthAnimation(Visible)
+                HealthAuto = Visible ~= false
+                if not HealthAuto then HealthDisplay = HealthTarget end
             end
 
             function Preview:SetDistance(Visible, Color, Text)
@@ -3649,6 +3776,29 @@ do
                 WeaponLabel.Visible = Visible == true
                 if typeof(Color) == "Color3" then WeaponLabel.TextColor3 = Color end
                 if Text ~= nil then WeaponLabel.Text = tostring(Text) end
+            end
+
+            function Preview:SetKD(Visible, Color, Text)
+                KDLabel.Visible = Visible == true
+                if typeof(Color) == "Color3" then KDLabel.TextColor3 = Color end
+                if Text ~= nil then KDLabel.Text = tostring(Text) end
+            end
+
+            function Preview:SetWeaponIcon(Visible, Asset, Size)
+                WeaponIcon.Visible = Visible == true and type(Asset) == "string" and Asset ~= ""
+                if type(Asset) == "string" then WeaponIcon.Image = Asset end
+                local Value = tonumber(Size) or 22
+                WeaponIcon.Size = UDim2.fromOffset(Value, Value)
+            end
+
+            function Preview:SetSkeleton(Visible, Color)
+                SkeletonVisible = Visible == true
+                if typeof(Color) == "Color3" then SkeletonColor = Color end
+            end
+
+            function Preview:SetTracer(Visible, Color)
+                TracerVisible = Visible == true
+                if typeof(Color) == "Color3" then TracerColor = Color end
             end
 
             local PreviewHighlight = nil
@@ -3667,6 +3817,8 @@ do
 
             local ViewportCamera = Instance.new("Camera")
 
+            ViewportCamera.Parent = Items["Viewport"].Instance
+            ViewportCamera.FieldOfView = 50
             Items["Viewport"].Instance.CurrentCamera = ViewportCamera
             ViewportCamera.CameraType = Enum.CameraType.Track
             ViewportCamera.Focus = CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
@@ -3698,6 +3850,7 @@ do
 
             local function ClearViewport()
                 table.clear(RenderObjects)
+                PreviewViewportModel = nil
                 for _, Obj in ipairs(Items["Viewport"].Instance:GetChildren()) do
                     if not Obj:IsA("Camera") and Obj ~= PreviewHighlight then
                         Obj:Destroy()
@@ -3722,6 +3875,9 @@ do
 
             function Preview:AddObject(Object)
                 if not Object or not ValidClasses[Object.ClassName] then
+                    return
+                end
+                if Object:IsA("BasePart") and Object:FindFirstAncestorWhichIsA("Accoutrement") then
                     return
                 end
 
@@ -3774,6 +3930,7 @@ do
                 Viewmodel.Name = "Viewmodel"
                 Viewmodel.Parent = Items["Viewport"].Instance
                 PreviewViewportModel = Viewmodel
+                if PreviewHighlight then PreviewHighlight.Adornee = Viewmodel end
 
                 for _, Object in ipairs(Model:GetDescendants()) do
                     local Clone = self:AddObject(Object)
@@ -3794,7 +3951,224 @@ do
                 end))
             end
 
-            Library:Connect(RunService.Heartbeat, function()
+            local BodyNames = {
+                "Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg",
+                "UpperTorso", "LowerTorso", "LeftUpperArm", "LeftLowerArm", "LeftHand",
+                "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperLeg", "LeftLowerLeg",
+                "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot"
+            }
+            local BonesR15 = {
+                {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+                {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+                {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+                {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+                {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+            }
+            local BonesR6 = {
+                {"Head", "Torso"}, {"Torso", "Left Arm"}, {"Torso", "Right Arm"},
+                {"Torso", "Left Leg"}, {"Torso", "Right Leg"}
+            }
+            local CubeEdges = {
+                {1, 2}, {1, 3}, {2, 4}, {3, 4},
+                {5, 6}, {5, 7}, {6, 8}, {7, 8},
+                {1, 5}, {2, 6}, {3, 7}, {4, 8}
+            }
+
+            local function hideLine(Line)
+                Line.Outer.Visible = false
+                Line.Inner.Visible = false
+            end
+
+            local function drawLine(Line, A, B, Color, Thickness)
+                if not A or not B then hideLine(Line) return end
+                local Delta = B - A
+                local Length = Delta.Magnitude
+                if Length < 0.5 then hideLine(Line) return end
+                local Angle = math.deg(math.atan2(Delta.Y, Delta.X))
+                local Mid = (A + B) * 0.5
+                local Width = math.max(1, tonumber(Thickness) or 1)
+                Line.Outer.Position = UDim2.fromOffset(Mid.X, Mid.Y)
+                Line.Outer.Size = UDim2.fromOffset(Length + 2, Width + 2)
+                Line.Outer.Rotation = Angle
+                Line.Outer.Visible = true
+                Line.Inner.Position = UDim2.fromOffset(Mid.X, Mid.Y)
+                Line.Inner.Size = UDim2.fromOffset(Length, Width)
+                Line.Inner.Rotation = Angle
+                Line.Inner.BackgroundColor3 = Color
+                Line.Inner.Visible = true
+            end
+
+            local function projectPoint(WorldPoint)
+                local Size = Items["Viewport"].Instance.AbsoluteSize
+                if Size.X < 2 or Size.Y < 2 then return nil end
+                local Local = ViewportCamera.CFrame:PointToObjectSpace(WorldPoint)
+                local Depth = -Local.Z
+                if Depth <= 0.05 then return nil end
+                local Focal = Size.Y * 0.5 / math.tan(math.rad(ViewportCamera.FieldOfView * 0.5))
+                return Vector2.new(Size.X * 0.5 + Local.X * Focal / Depth, Size.Y * 0.5 - Local.Y * Focal / Depth)
+            end
+
+            local function bodyCorners()
+                if not PreviewViewportModel then return nil end
+                local Root = PreviewViewportModel:FindFirstChild("HumanoidRootPart")
+                    or PreviewViewportModel:FindFirstChild("Torso")
+                    or PreviewViewportModel:FindFirstChild("UpperTorso")
+                if not Root or not Root:IsA("BasePart") then return nil end
+                local Base = Root.CFrame
+                local MinX, MinY, MinZ = math.huge, math.huge, math.huge
+                local MaxX, MaxY, MaxZ = -math.huge, -math.huge, -math.huge
+                local Count = 0
+                for _, Name in ipairs(BodyNames) do
+                    local Part = PreviewViewportModel:FindFirstChild(Name)
+                    if Part and Part:IsA("BasePart") then
+                        local CF = Base:ToObjectSpace(Part.CFrame)
+                        local Pos, Half = CF.Position, Part.Size * 0.5
+                        local Right, Up, Look = CF.RightVector, CF.UpVector, CF.LookVector
+                        local X = math.abs(Right.X) * Half.X + math.abs(Up.X) * Half.Y + math.abs(Look.X) * Half.Z
+                        local Y = math.abs(Right.Y) * Half.X + math.abs(Up.Y) * Half.Y + math.abs(Look.Y) * Half.Z
+                        local Z = math.abs(Right.Z) * Half.X + math.abs(Up.Z) * Half.Y + math.abs(Look.Z) * Half.Z
+                        MinX, MinY, MinZ = math.min(MinX, Pos.X - X), math.min(MinY, Pos.Y - Y), math.min(MinZ, Pos.Z - Z)
+                        MaxX, MaxY, MaxZ = math.max(MaxX, Pos.X + X), math.max(MaxY, Pos.Y + Y), math.max(MaxZ, Pos.Z + Z)
+                        Count += 1
+                    end
+                end
+                if Count == 0 then return nil end
+                local CF = Base * CFrame.new((MinX + MaxX) * 0.5, (MinY + MaxY) * 0.5, (MinZ + MaxZ) * 0.5)
+                local SX, SY, SZ = (MaxX - MinX) * 0.5, (MaxY - MinY) * 0.5, (MaxZ - MinZ) * 0.5
+                return {
+                    CF * Vector3.new(-SX, -SY, -SZ), CF * Vector3.new(SX, -SY, -SZ),
+                    CF * Vector3.new(-SX, SY, -SZ), CF * Vector3.new(SX, SY, -SZ),
+                    CF * Vector3.new(-SX, -SY, SZ), CF * Vector3.new(SX, -SY, SZ),
+                    CF * Vector3.new(-SX, SY, SZ), CF * Vector3.new(SX, SY, SZ)
+                }
+            end
+
+            local function updateHealth(Delta)
+                local Step = math.clamp(tonumber(Delta) or 0, 0, 0.1)
+                if HealthAuto and HealthVisible then
+                    if HealthPause > 0 then
+                        HealthPause = math.max(0, HealthPause - Step)
+                    else
+                        local Speed = HealthDirection < 0 and 0.34 or 0.48
+                        HealthDisplay = HealthDisplay + HealthDirection * Speed * Step
+                        if HealthDisplay <= 0.12 then
+                            HealthDisplay = 0.12
+                            HealthDirection = 1
+                            HealthPause = 0.35
+                        elseif HealthDisplay >= 1 then
+                            HealthDisplay = 1
+                            HealthDirection = -1
+                            HealthPause = 0.5
+                        end
+                    end
+                else
+                    local Blend = math.clamp(Step * 12, 0, 1)
+                    HealthDisplay = HealthDisplay + (HealthTarget - HealthDisplay) * Blend
+                end
+            end
+
+            local function updateESP(Delta)
+                updateHealth(Delta)
+                local WorldCorners = bodyCorners()
+                if not WorldCorners then
+                    Box.Visible = false
+                    BoxOutline.Visible = false
+                    BoxFill.Visible = false
+                    HealthBack.Visible = false
+                    HealthText.Visible = false
+                    for _, Line in ipairs(CornerLines) do hideLine(Line) end
+                    for _, Line in ipairs(Box3DLines) do hideLine(Line) end
+                    for _, Line in ipairs(SkeletonLines) do hideLine(Line) end
+                    hideLine(TracerLine)
+                    return
+                end
+                local ScreenCorners = {}
+                local MinX, MinY, MaxX, MaxY = math.huge, math.huge, -math.huge, -math.huge
+                for Index = 1, 8 do
+                    local Point = projectPoint(WorldCorners[Index])
+                    if not Point then return end
+                    ScreenCorners[Index] = Point
+                    MinX, MinY = math.min(MinX, Point.X), math.min(MinY, Point.Y)
+                    MaxX, MaxY = math.max(MaxX, Point.X), math.max(MaxY, Point.Y)
+                end
+                local Width, Height = MaxX - MinX, MaxY - MinY
+                if Width < 1 or Height < 1 then return end
+                local Position = UDim2.fromOffset(math.floor(MinX + 0.5), math.floor(MinY + 0.5))
+                local Size = UDim2.fromOffset(math.floor(Width + 0.5), math.floor(Height + 0.5))
+                local Kind = string.lower(tostring(BoxType))
+                Box.Position, Box.Size = Position, Size
+                BoxOutline.Position, BoxOutline.Size = Position, Size
+                BoxFill.Position, BoxFill.Size = Position, Size
+                BoxStroke.Color = BoxColor
+                BoxFill.BackgroundColor3 = BoxFillColor
+                BoxFill.Visible = BoxFillVisible
+                Box.Visible = BoxVisible and Kind ~= "corner" and Kind ~= "3d"
+                BoxOutline.Visible = Box.Visible
+                for _, Line in ipairs(CornerLines) do hideLine(Line) end
+                for _, Line in ipairs(Box3DLines) do hideLine(Line) end
+                if BoxVisible and Kind == "corner" then
+                    local X, Y, R, B = MinX, MinY, MaxX, MaxY
+                    local CW, CH = math.max(3, Width * 0.25), math.max(3, Height * 0.25)
+                    local Segments = {
+                        {Vector2.new(X, Y), Vector2.new(X + CW, Y)}, {Vector2.new(X, Y), Vector2.new(X, Y + CH)},
+                        {Vector2.new(R, Y), Vector2.new(R - CW, Y)}, {Vector2.new(R, Y), Vector2.new(R, Y + CH)},
+                        {Vector2.new(X, B), Vector2.new(X + CW, B)}, {Vector2.new(X, B), Vector2.new(X, B - CH)},
+                        {Vector2.new(R, B), Vector2.new(R - CW, B)}, {Vector2.new(R, B), Vector2.new(R, B - CH)}
+                    }
+                    for Index, Segment in ipairs(Segments) do drawLine(CornerLines[Index], Segment[1], Segment[2], BoxColor, 1) end
+                elseif BoxVisible and Kind == "3d" then
+                    for Index, Edge in ipairs(CubeEdges) do
+                        drawLine(Box3DLines[Index], ScreenCorners[Edge[1]], ScreenCorners[Edge[2]], BoxColor, 1)
+                    end
+                end
+
+                local Center = (MinX + MaxX) * 0.5
+                local TopY = MinY - 17
+                if DisplayNameLabel.Visible then
+                    DisplayNameLabel.Position = UDim2.fromOffset(Center - 90, TopY)
+                    TopY -= 16
+                end
+                if NameLabel.Visible then NameLabel.Position = UDim2.fromOffset(Center - 90, TopY) end
+                local BottomY = MaxY + 2
+                if DistanceLabel.Visible then
+                    DistanceLabel.Position = UDim2.fromOffset(Center - 90, BottomY)
+                    BottomY += 15
+                end
+                if WeaponLabel.Visible then
+                    WeaponLabel.Position = UDim2.fromOffset(Center - 90, BottomY)
+                    BottomY += 15
+                end
+                if WeaponIcon.Visible then WeaponIcon.Position = UDim2.fromOffset(Center - WeaponIcon.AbsoluteSize.X * 0.5, BottomY) end
+                if KDLabel.Visible then KDLabel.Position = UDim2.fromOffset(MaxX + 6, MinY) end
+
+                HealthBack.Visible = HealthVisible
+                HealthBack.Position = UDim2.fromOffset(MinX - 8, MinY - 1)
+                HealthBack.Size = UDim2.fromOffset(5, Height + 2)
+                HealthFill.Size = UDim2.fromScale(1, math.clamp(HealthDisplay, 0, 1))
+                HealthText.Visible = HealthVisible and HealthCounterVisible
+                HealthText.Text = tostring(math.floor(HealthDisplay * 100 + 0.5))
+                HealthText.Position = UDim2.fromOffset(MinX - 50, MinY + Height * (1 - HealthDisplay) - 7)
+
+                for _, Line in ipairs(SkeletonLines) do hideLine(Line) end
+                if SkeletonVisible and PreviewViewportModel then
+                    local Bones = PreviewViewportModel:FindFirstChild("UpperTorso") and BonesR15 or BonesR6
+                    for Index, Bone in ipairs(Bones) do
+                        local A = PreviewViewportModel:FindFirstChild(Bone[1])
+                        local B = PreviewViewportModel:FindFirstChild(Bone[2])
+                        if A and B and A:IsA("BasePart") and B:IsA("BasePart") then
+                            drawLine(SkeletonLines[Index], projectPoint(A.Position), projectPoint(B.Position), SkeletonColor, 1)
+                        end
+                    end
+                end
+                if TracerVisible then
+                    local ViewSize = Items["Viewport"].Instance.AbsoluteSize
+                    drawLine(TracerLine, Vector2.new(ViewSize.X * 0.5, ViewSize.Y), Vector2.new(Center, MaxY), TracerColor, 1)
+                else
+                    hideLine(TracerLine)
+                end
+            end
+
+            Library:Connect(RunService.RenderStepped, function(Delta)
                 if not PreviewModel or not Items["ESPPreview"].Instance.Visible then
                     return
                 end
@@ -3813,6 +4187,7 @@ do
                         Preview:RemoveObject(Original)
                     end
                 end
+                updateESP(Delta)
             end)
 
             task.spawn(function()
