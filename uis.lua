@@ -119,6 +119,7 @@ local Library = {
     CopiedColor = nil,
     LayoutRegistry = {},
     SettingsWidgets = {},
+    SettingsControls = {},
     ActiveConfirmDialog = nil,
     MouseCursor = nil,
     MouseStateBeforeOpen = nil,
@@ -927,6 +928,20 @@ do
         })
     end
 
+    Library.RegisterSettingsControl = function(Self, Data)
+        if type(Data) ~= "table" then return end
+        local name = Data.Name or Data.name
+        local callback = Data.Callback or Data.callback
+        if type(name) ~= "string" or type(callback) ~= "function" then return end
+        table.insert(Library.SettingsControls, {
+            Name = name,
+            Flag = Data.Flag or Data.flag or ("UISetting" .. name:gsub("%s+", "")),
+            Default = Data.Default == true,
+            Callback = callback,
+            Settings = Data.Settings or Data.settings
+        })
+    end
+
     local menuBackground = {
         enabled = false,
         throughSections = true,
@@ -936,6 +951,7 @@ do
         connection = nil,
         connectionTarget = nil,
         originalTransparency = setmetatable({}, { __mode = "k" }),
+        originalMainTransparency = nil,
         originalClipsDescendants = nil
     }
 
@@ -959,7 +975,11 @@ do
         if menuBackground.originalTransparency[object] == nil then
             menuBackground.originalTransparency[object] = transparency
         end
-        object.BackgroundTransparency = math.max(transparency, 0.38)
+        if object:IsA("Frame") or object:IsA("ScrollingFrame") then
+            object.BackgroundTransparency = 1
+        else
+            object.BackgroundTransparency = math.max(transparency, 0.38)
+        end
     end
 
     Library.RefreshMenuBackground = function(Self)
@@ -994,13 +1014,23 @@ do
         image.Image = menuBackground.asset or ""
         image.Visible = menuBackground.enabled and menuBackground.asset ~= nil
         if menuBackground.enabled then
+            if menuBackground.originalMainTransparency == nil then
+                menuBackground.originalMainTransparency = mainFrame.BackgroundTransparency
+            end
             if menuBackground.originalClipsDescendants == nil then
                 menuBackground.originalClipsDescendants = mainFrame.ClipsDescendants
             end
+            mainFrame.BackgroundTransparency = 1
             mainFrame.ClipsDescendants = true
-        elseif menuBackground.originalClipsDescendants ~= nil then
-            mainFrame.ClipsDescendants = menuBackground.originalClipsDescendants
-            menuBackground.originalClipsDescendants = nil
+        else
+            if menuBackground.originalMainTransparency ~= nil then
+                mainFrame.BackgroundTransparency = menuBackground.originalMainTransparency
+                menuBackground.originalMainTransparency = nil
+            end
+            if menuBackground.originalClipsDescendants ~= nil then
+                mainFrame.ClipsDescendants = menuBackground.originalClipsDescendants
+                menuBackground.originalClipsDescendants = nil
+            end
         end
         restoreMenuTransparency()
         if menuBackground.enabled and menuBackground.throughSections then
@@ -12687,6 +12717,19 @@ do
                             Library:SetBackgroundSnowEnabled(Value)
                         end
                     })
+
+                    for _, ControlData in Library.SettingsControls do
+                        local ControlToggle = SettingsSection:Toggle({
+                            Name = ControlData.Name,
+                            Flag = ControlData.Flag,
+                            Default = ControlData.Default,
+                            Callback = ControlData.Callback
+                        })
+                        if type(ControlData.Settings) == "function" then
+                            local ControlSettings = ControlToggle:Settings()
+                            ControlData.Settings(ControlSettings, ControlToggle)
+                        end
+                    end
 
                     SettingsSection:Button({
                         Name = "Unload",
