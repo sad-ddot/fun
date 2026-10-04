@@ -970,15 +970,15 @@ do
         if not (object:IsA("Frame") or object:IsA("TextButton") or object:IsA("TextLabel") or object:IsA("TextBox") or object:IsA("ScrollingFrame")) then return end
         local ok, transparency = pcall(function() return object.BackgroundTransparency end)
         if not ok or type(transparency) ~= "number" or transparency >= 1 then return end
-        local size = object.AbsoluteSize
-        if size.Y <= 3 then return end
+        local height = object.Size.Y
+        if height.Scale == 0 and height.Offset <= 3 then return end
         if menuBackground.originalTransparency[object] == nil then
             menuBackground.originalTransparency[object] = transparency
         end
         if object:IsA("Frame") or object:IsA("ScrollingFrame") then
-            object.BackgroundTransparency = 1
-        else
             object.BackgroundTransparency = math.max(transparency, 0.38)
+        else
+            object.BackgroundTransparency = math.max(transparency, 0.18)
         end
     end
 
