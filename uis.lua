@@ -927,6 +927,164 @@ do
         })
     end
 
+    local menuBackground = {
+        enabled = false,
+        throughSections = true,
+        url = nil,
+        asset = nil,
+        image = nil,
+        connection = nil,
+        connectionTarget = nil,
+        originalTransparency = setmetatable({}, { __mode = "k" }),
+        originalClipsDescendants = nil
+    }
+
+    local function restoreMenuTransparency()
+        for object, transparency in pairs(menuBackground.originalTransparency) do
+            if object and object.Parent then
+                pcall(function() object.BackgroundTransparency = transparency end)
+            end
+            menuBackground.originalTransparency[object] = nil
+        end
+    end
+
+    local function softenMenuObject(object)
+        if not menuBackground.enabled or not menuBackground.throughSections then return end
+        if not object or object == menuBackground.image or not object:IsA("GuiObject") then return end
+        if not (object:IsA("Frame") or object:IsA("TextButton") or object:IsA("TextLabel") or object:IsA("TextBox") or object:IsA("ScrollingFrame")) then return end
+        local ok, transparency = pcall(function() return object.BackgroundTransparency end)
+        if not ok or type(transparency) ~= "number" or transparency >= 1 then return end
+        local size = object.AbsoluteSize
+        if size.Y <= 3 then return end
+        if menuBackground.originalTransparency[object] == nil then
+            menuBackground.originalTransparency[object] = transparency
+        end
+        object.BackgroundTransparency = math.max(transparency, 0.38)
+    end
+
+    Library.RefreshMenuBackground = function(Self)
+        local mainFrame = Library.MainWindowFrame
+        if not mainFrame then return false end
+        if menuBackground.connectionTarget ~= mainFrame then
+            if menuBackground.connection then menuBackground.connection:Disconnect() end
+            menuBackground.connectionTarget = mainFrame
+            menuBackground.connection = Library:Connect(mainFrame.DescendantAdded, function(object)
+                if menuBackground.enabled and menuBackground.throughSections then
+                    task.defer(function() softenMenuObject(object) end)
+                end
+            end)
+        end
+        local image = menuBackground.image
+        if not image or image.Parent ~= mainFrame then
+            if image then image:Destroy() end
+            image = Instance.new("ImageLabel")
+            image.Name = "KotaMenuBackground"
+            image.BackgroundTransparency = 1
+            image.BorderSizePixel = 0
+            image.Position = UDim2.fromScale(0, 0)
+            image.Size = UDim2.fromScale(1, 1)
+            image.ScaleType = Enum.ScaleType.Crop
+            image.ImageTransparency = 0
+            image.ZIndex = 0
+            image.Active = false
+            image.Selectable = false
+            image.Parent = mainFrame
+            menuBackground.image = image
+        end
+        image.Image = menuBackground.asset or ""
+        image.Visible = menuBackground.enabled and menuBackground.asset ~= nil
+        if menuBackground.enabled then
+            if menuBackground.originalClipsDescendants == nil then
+                menuBackground.originalClipsDescendants = mainFrame.ClipsDescendants
+            end
+            mainFrame.ClipsDescendants = true
+        elseif menuBackground.originalClipsDescendants ~= nil then
+            mainFrame.ClipsDescendants = menuBackground.originalClipsDescendants
+            menuBackground.originalClipsDescendants = nil
+        end
+        restoreMenuTransparency()
+        if menuBackground.enabled and menuBackground.throughSections then
+            for _, object in ipairs(mainFrame:GetDescendants()) do
+                softenMenuObject(object)
+            end
+        end
+        return image.Visible
+    end
+
+    Library.SetMenuBackgroundEnabled = function(Self, enabled)
+        menuBackground.enabled = enabled == true
+        Library:RefreshMenuBackground()
+        return menuBackground.enabled
+    end
+
+    Library.SetMenuBackgroundThroughSections = function(Self, enabled)
+        menuBackground.throughSections = enabled == true
+        Library:RefreshMenuBackground()
+        return menuBackground.throughSections
+    end
+
+    Library.SetMenuBackgroundAsset = function(Self, asset)
+        if type(asset) ~= "string" or asset == "" then
+            menuBackground.asset = nil
+            Library:RefreshMenuBackground()
+            return false
+        end
+        menuBackground.asset = asset
+        Library:RefreshMenuBackground()
+        return true
+    end
+
+    Library.LoadMenuBackground = function(Self, url)
+        url = tostring(url or "")
+        if #url < 8 then return false, "invalid url" end
+        if menuBackground.url == url and menuBackground.asset then
+            Library:SetMenuBackgroundEnabled(true)
+            return true, menuBackground.asset
+        end
+        local directAsset = url:match("^rbxassetid://") or url:match("^rbxasset://")
+        if directAsset then
+            menuBackground.url = url
+            menuBackground.asset = url
+            Library:SetMenuBackgroundEnabled(true)
+            return true, url
+        end
+        local ok, body = pcall(game.HttpGet, game, url)
+        if not ok or type(body) ~= "string" or #body < 100 then
+            return false, "download failed"
+        end
+        if type(writefile) ~= "function" then return false, "writefile unavailable" end
+        local assetLoader = getcustomasset or getsynasset
+        if type(assetLoader) ~= "function" then return false, "custom asset unavailable" end
+        if type(isfolder) == "function" and type(makefolder) == "function" then
+            pcall(function()
+                if not isfolder("kota") then makefolder("kota") end
+                if not isfolder("kota/backgrounds") then makefolder("kota/backgrounds") end
+            end)
+        end
+        local lowerUrl = url:lower()
+        local extension = (lowerUrl:find(".jpg", 1, true) or lowerUrl:find(".jpeg", 1, true)) and ".jpg" or ".png"
+        local path = "kota/backgrounds/menu" .. extension
+        local written = pcall(writefile, path, body)
+        if not written then return false, "write failed" end
+        local loaded, asset = pcall(assetLoader, path)
+        if not loaded or type(asset) ~= "string" or asset == "" then
+            return false, "asset load failed"
+        end
+        menuBackground.url = url
+        menuBackground.asset = asset
+        Library:SetMenuBackgroundEnabled(true)
+        return true, asset
+    end
+
+    Library.GetMenuBackgroundState = function(Self)
+        return {
+            enabled = menuBackground.enabled,
+            throughSections = menuBackground.throughSections,
+            url = menuBackground.url,
+            asset = menuBackground.asset
+        }
+    end
+
     Library.SetupBackgroundEffects = function(Self)
         if Library.BackgroundEffects then
             return
@@ -4223,9 +4381,12 @@ do
                     return
                 end
 
+                PreviewRotation = (PreviewRotation + Delta * math.rad(32)) % (math.pi * 2)
+                local PivotFrame = CFrame.new(Root.Position)
+                local SpinFrame = PivotFrame * CFrame.Angles(0, PreviewRotation, 0)
                 for Original, Clone in pairs(RenderObjects) do
                     if Original and Original.Parent then
-                        Clone.CFrame = Original.CFrame
+                        Clone.CFrame = SpinFrame * PivotFrame:ToObjectSpace(Original.CFrame)
                     else
                         Preview:RemoveObject(Original)
                     end
@@ -4233,9 +4394,7 @@ do
 
                 local _, Focus = bodyCorners()
                 Focus = Focus or Root.Position
-                PreviewRotation = (PreviewRotation + Delta * math.rad(32)) % (math.pi * 2)
-                local CameraOffset = Vector3.new(math.sin(PreviewRotation) * 9.5, 0, math.cos(PreviewRotation) * 9.5)
-                ViewportCamera.CFrame = CFrame.new(Focus + CameraOffset, Focus)
+                ViewportCamera.CFrame = CFrame.new(Focus + Vector3.new(0, 0, 9.5), Focus)
                 updateESP(Delta)
             end)
 
@@ -9482,6 +9641,7 @@ do
 
                 Window.Items = Items
                 Library.MainWindowFrame = Items["MainFrame"].Instance
+                Library:RefreshMenuBackground()
             end
 
             local Debounce = false
