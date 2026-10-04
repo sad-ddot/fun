@@ -3543,6 +3543,59 @@ do
                 })
             end
 
+            local Overlay = Instance.new("Frame")
+            Overlay.Name = "ESPOverlay"
+            Overlay.BackgroundTransparency = 1
+            Overlay.Size = UDim2.fromScale(1, 1)
+            Overlay.ZIndex = 20
+            Overlay.Parent = Items["Background"].Instance
+            local Box = Instance.new("Frame")
+            Box.BackgroundTransparency = 1
+            Box.BorderSizePixel = 0
+            Box.Position = UDim2.new(0.5, -55, 0.5, -100)
+            Box.Size = UDim2.fromOffset(110, 200)
+            Box.Visible = false
+            Box.ZIndex = 21
+            Box.Parent = Overlay
+            local BoxStroke = Instance.new("UIStroke")
+            BoxStroke.Thickness = 1
+            BoxStroke.Color = Color3.new(1, 1, 1)
+            BoxStroke.Parent = Box
+            local function previewLabel(text, position, size)
+                local label = Instance.new("TextLabel")
+                label.BackgroundTransparency = 1
+                label.Position = position
+                label.Size = size
+                label.FontFace = Library.Font
+                label.TextSize = Library.FontSize
+                label.TextColor3 = Color3.new(1, 1, 1)
+                label.TextStrokeTransparency = 0
+                label.Text = text
+                label.Visible = false
+                label.ZIndex = 22
+                label.Parent = Overlay
+                return label
+            end
+            local NameLabel = previewLabel("Player", UDim2.new(0.5, -70, 0.5, -118), UDim2.fromOffset(140, 16))
+            local DistanceLabel = previewLabel("120 studs", UDim2.new(0.5, -70, 0.5, 103), UDim2.fromOffset(140, 16))
+            local WeaponLabel = previewLabel("Salvaged AK47", UDim2.new(0.5, -70, 0.5, 119), UDim2.fromOffset(140, 16))
+            local HealthBack = Instance.new("Frame")
+            HealthBack.BackgroundColor3 = Color3.new(0, 0, 0)
+            HealthBack.BorderSizePixel = 0
+            HealthBack.Position = UDim2.new(0.5, -62, 0.5, -100)
+            HealthBack.Size = UDim2.fromOffset(5, 200)
+            HealthBack.Visible = false
+            HealthBack.ZIndex = 22
+            HealthBack.Parent = Overlay
+            local HealthFill = Instance.new("Frame")
+            HealthFill.AnchorPoint = Vector2.new(0, 1)
+            HealthFill.Position = UDim2.fromScale(0, 1)
+            HealthFill.Size = UDim2.fromScale(1, 0.76)
+            HealthFill.BorderSizePixel = 0
+            HealthFill.BackgroundColor3 = Color3.fromRGB(80, 255, 120)
+            HealthFill.ZIndex = 23
+            HealthFill.Parent = HealthBack
+
             AlignPreviewToWindow(Items["ESPPreview"].Instance)
 
             local IsVisible = true
@@ -3557,8 +3610,57 @@ do
                 ApplyVisibility(Library.WindowOpenState)
             end
 
+            local PreviewModel = nil
+            local PreviewViewportModel = nil
+
             function Preview:SetText(Text)
                 Items["Text"].Instance.Text = Text
+            end
+
+            function Preview:SetBox(Visible, Color)
+                Box.Visible = Visible == true
+                if typeof(Color) == "Color3" then BoxStroke.Color = Color end
+            end
+
+            function Preview:SetName(Visible, Color, Text)
+                NameLabel.Visible = Visible == true
+                if typeof(Color) == "Color3" then NameLabel.TextColor3 = Color end
+                if Text ~= nil then NameLabel.Text = tostring(Text) end
+            end
+
+            function Preview:SetHealth(Visible, Ratio, TopColor, BottomColor)
+                HealthBack.Visible = Visible == true
+                local value = math.clamp(tonumber(Ratio) or 1, 0, 1)
+                HealthFill.Size = UDim2.fromScale(1, value)
+                if typeof(TopColor) == "Color3" and typeof(BottomColor) == "Color3" then
+                    HealthFill.BackgroundColor3 = BottomColor:Lerp(TopColor, value)
+                end
+            end
+
+            function Preview:SetDistance(Visible, Color, Text)
+                DistanceLabel.Visible = Visible == true
+                if typeof(Color) == "Color3" then DistanceLabel.TextColor3 = Color end
+                if Text ~= nil then DistanceLabel.Text = tostring(Text) end
+            end
+
+            function Preview:SetWeapon(Visible, Color, Text)
+                WeaponLabel.Visible = Visible == true
+                if typeof(Color) == "Color3" then WeaponLabel.TextColor3 = Color end
+                if Text ~= nil then WeaponLabel.Text = tostring(Text) end
+            end
+
+            local PreviewHighlight = nil
+            function Preview:SetChams(Visible, FillColor, OutlineEnabled, OutlineColor)
+                if not PreviewHighlight then
+                    PreviewHighlight = Instance.new("Highlight")
+                    PreviewHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    PreviewHighlight.Parent = Items["Viewport"].Instance
+                end
+                PreviewHighlight.Adornee = PreviewViewportModel
+                PreviewHighlight.Enabled = Visible == true and PreviewViewportModel ~= nil
+                if typeof(FillColor) == "Color3" then PreviewHighlight.FillColor = FillColor end
+                if typeof(OutlineColor) == "Color3" then PreviewHighlight.OutlineColor = OutlineColor end
+                PreviewHighlight.OutlineTransparency = OutlineEnabled == false and 1 or 0
             end
 
             local ViewportCamera = Instance.new("Camera")
@@ -3568,7 +3670,6 @@ do
             ViewportCamera.Focus = CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
             ViewportCamera.CFrame = CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 
-            local PreviewModel = nil
             local RenderObjects = table.create(25)
             local Connections = {}
 
@@ -3670,6 +3771,7 @@ do
                 local Viewmodel = Instance.new("Model")
                 Viewmodel.Name = "Viewmodel"
                 Viewmodel.Parent = Items["Viewport"].Instance
+                PreviewViewportModel = Viewmodel
 
                 for _, Object in ipairs(Model:GetDescendants()) do
                     local Clone = self:AddObject(Object)
@@ -10755,40 +10857,15 @@ do
                     Dropdown:Add(Value)
                 end
 
-                if Dropdown.Multi then
-                    if type(Dropdown.Value) ~= "table" then
-                        return
-                    end
-
-                    local Kept = {}
-                    for Index, Value in Dropdown.Value do
-                        local OptionData = Dropdown.Options[Value]
-                        if OptionData then
-                            Kept[#Kept + 1] = Value
-                            OptionData.IsSelected = true
-                            OptionData:ToggleState("Active")
-                        end
-                    end
-
-                    if #Kept ~= #Dropdown.Value then
-                        Dropdown.Value = Kept
-                        Flags[Dropdown.Flag] = Kept
-                        Items["Value"].Instance.Text = table.concat(Kept, ", ")
-                        Library:SafeCall(Dropdown.Callback, Kept)
-                    end
+                if Dropdown.Multi or not Dropdown.KeepValid then
                     return
                 end
 
                 local Current = Dropdown.Value
-                if Current ~= nil and Dropdown.Options[Current] then
-                    Dropdown.Options[Current].Selected = true
-                    Dropdown.Options[Current]:ToggleState("Active")
+                if Current == nil or Dropdown.Options[Current] then
                     return
                 end
 
-                if Current == nil then
-                    return
-                end
 
                 if List[1] ~= nil then
                     Dropdown:Set(List[1])
@@ -11874,6 +11951,8 @@ do
                             ConfigSelected = Value
                         end
                     })
+
+                    ConfigsDropdown.KeepValid = true
 
                     ConfigsSection:Textbox({
                         Name = "Config name",
