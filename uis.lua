@@ -3600,7 +3600,9 @@ do
 
             local IsVisible = true
             local ApplyVisibility = function(IsWindowOpen)
-                Items["ESPPreview"]:FadeDescendants(IsVisible and IsWindowOpen)
+                local visible = IsVisible and IsWindowOpen
+                Items["ESPPreview"].Instance.Visible = visible
+                Items["ESPPreview"]:FadeDescendants(visible)
             end
 
             Library:BindToWindowVisibility(ApplyVisibility)
@@ -3697,7 +3699,7 @@ do
             local function ClearViewport()
                 table.clear(RenderObjects)
                 for _, Obj in ipairs(Items["Viewport"].Instance:GetChildren()) do
-                    if not Obj:IsA("Camera") then
+                    if not Obj:IsA("Camera") and Obj ~= PreviewHighlight then
                         Obj:Destroy()
                     end
                 end
