@@ -948,6 +948,7 @@ do
         url = nil,
         asset = nil,
         image = nil,
+        generation = 0,
         connection = nil,
         connectionTarget = nil,
         originalTransparency = setmetatable({}, { __mode = "k" }),
@@ -1093,7 +1094,8 @@ do
         end
         local lowerUrl = url:lower()
         local extension = (lowerUrl:find(".jpg", 1, true) or lowerUrl:find(".jpeg", 1, true)) and ".jpg" or ".png"
-        local path = "kota/backgrounds/menu" .. extension
+        menuBackground.generation = menuBackground.generation + 1
+        local path = "kota/backgrounds/menu_" .. tostring(menuBackground.generation) .. extension
         local written = pcall(writefile, path, body)
         if not written then return false, "write failed" end
         local loaded, asset = pcall(assetLoader, path)
@@ -1102,6 +1104,7 @@ do
         end
         menuBackground.url = url
         menuBackground.asset = asset
+        if menuBackground.image then menuBackground.image.Image = "" end
         Library:SetMenuBackgroundEnabled(true)
         return true, asset
     end
