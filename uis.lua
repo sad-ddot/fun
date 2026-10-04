@@ -3557,6 +3557,11 @@ do
             BoxFill.Visible = false
             BoxFill.ZIndex = 20
             BoxFill.Parent = Overlay
+            local BoxFillGradient = Instance.new("UIGradient")
+            BoxFillGradient.Enabled = false
+            BoxFillGradient.Rotation = 90
+            BoxFillGradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1))
+            BoxFillGradient.Parent = BoxFill
 
             local BoxOutline = Instance.new("Frame")
             BoxOutline.BackgroundTransparency = 1
@@ -3581,6 +3586,11 @@ do
             BoxStroke.Color = Color3.new(1, 1, 1)
             BoxStroke.LineJoinMode = Enum.LineJoinMode.Miter
             BoxStroke.Parent = Box
+            local BoxGradient = Instance.new("UIGradient")
+            BoxGradient.Enabled = false
+            BoxGradient.Rotation = 90
+            BoxGradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1))
+            BoxGradient.Parent = BoxStroke
 
             local function previewLabel(text, size)
                 local label = Instance.new("TextLabel")
@@ -3674,6 +3684,12 @@ do
             local BoxType = "Default"
             local BoxFillVisible = false
             local BoxFillColor = Color3.new(1, 1, 1)
+            local BoxGradientVisible = false
+            local BoxGradientTop = Color3.new(1, 1, 1)
+            local BoxGradientBottom = Color3.new(1, 1, 1)
+            local BoxFillGradientVisible = false
+            local BoxFillGradientTop = Color3.new(1, 1, 1)
+            local BoxFillGradientBottom = Color3.new(1, 1, 1)
             local HealthVisible = false
             local HealthTarget = 1
             local HealthDisplay = 1
@@ -3725,6 +3741,22 @@ do
 
             function Preview:SetBoxType(Type)
                 if type(Type) == "string" then BoxType = Type end
+            end
+
+            function Preview:SetBoxGradient(Visible, TopColor, BottomColor)
+                BoxGradientVisible = Visible == true
+                if typeof(TopColor) == "Color3" then BoxGradientTop = TopColor end
+                if typeof(BottomColor) == "Color3" then BoxGradientBottom = BottomColor end
+                BoxGradient.Enabled = BoxGradientVisible
+                BoxGradient.Color = ColorSequence.new(BoxGradientTop, BoxGradientBottom)
+            end
+
+            function Preview:SetBoxFillGradient(Visible, TopColor, BottomColor)
+                BoxFillGradientVisible = Visible == true
+                if typeof(TopColor) == "Color3" then BoxFillGradientTop = TopColor end
+                if typeof(BottomColor) == "Color3" then BoxFillGradientBottom = BottomColor end
+                BoxFillGradient.Enabled = BoxFillGradientVisible
+                BoxFillGradient.Color = ColorSequence.new(BoxFillGradientTop, BoxFillGradientBottom)
             end
 
             function Preview:SetBoxFill(Visible, Color, Transparency)
@@ -4067,6 +4099,12 @@ do
                 end
             end
 
+            local function boxLineColor(Y, MinY, MaxY)
+                if not BoxGradientVisible then return BoxColor end
+                local Ratio = math.clamp((Y - MinY) / math.max(MaxY - MinY, 1), 0, 1)
+                return BoxGradientTop:Lerp(BoxGradientBottom, Ratio)
+            end
+
             local function updateESP(Delta)
                 updateHealth(Delta)
                 local WorldCorners = bodyCorners()
@@ -4115,10 +4153,16 @@ do
                         {Vector2.new(X, B), Vector2.new(X + CW, B)}, {Vector2.new(X, B), Vector2.new(X, B - CH)},
                         {Vector2.new(R, B), Vector2.new(R - CW, B)}, {Vector2.new(R, B), Vector2.new(R, B - CH)}
                     }
-                    for Index, Segment in ipairs(Segments) do drawLine(CornerLines[Index], Segment[1], Segment[2], BoxColor, 1) end
+                    for Index, Segment in ipairs(Segments) do
+                        local MidY = (Segment[1].Y + Segment[2].Y) * 0.5
+                        drawLine(CornerLines[Index], Segment[1], Segment[2], boxLineColor(MidY, MinY, MaxY), 1)
+                    end
                 elseif BoxVisible and Kind == "3d" then
                     for Index, Edge in ipairs(CubeEdges) do
-                        drawLine(Box3DLines[Index], ScreenCorners[Edge[1]], ScreenCorners[Edge[2]], BoxColor, 1)
+                        local PointA = ScreenCorners[Edge[1]]
+                        local PointB = ScreenCorners[Edge[2]]
+                        local MidY = (PointA.Y + PointB.Y) * 0.5
+                        drawLine(Box3DLines[Index], PointA, PointB, boxLineColor(MidY, MinY, MaxY), 1)
                     end
                 end
 
