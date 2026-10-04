@@ -977,9 +977,9 @@ do
             menuBackground.originalTransparency[object] = transparency
         end
         if object:IsA("Frame") or object:IsA("ScrollingFrame") then
-            object.BackgroundTransparency = math.max(transparency, 0.45)
+            object.BackgroundTransparency = math.max(transparency, 0.52)
         else
-            object.BackgroundTransparency = math.max(transparency, 0.22)
+            object.BackgroundTransparency = math.max(transparency, 0.26)
         end
     end
 
@@ -10021,6 +10021,7 @@ do
                 Items["Page"]:FadeDescendants(Bool, function()
                     if Page.Active then
                         Items["Page"].Instance.Parent = Page.Window.Items["Content"].Instance
+                        Library:RefreshMenuBackground()
                     else
                         Items["Page"].Instance.Visible = false
                         Items["Page"].Instance.Parent = Library.UnusedHolder.Instance
@@ -10176,6 +10177,7 @@ do
                 Items["Page"]:FadeDescendants(Bool, function()
                     if Page.Active then
                         Items["Page"].Instance.Parent = Page.Page.Items["Columns"].Instance
+                        Library:RefreshMenuBackground()
                     else
                         Items["Page"].Instance.Visible = false
                         Items["Page"].Instance.Parent = Library.UnusedHolder.Instance
