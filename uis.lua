@@ -3722,6 +3722,7 @@ do
 
             local PreviewModel = nil
             local PreviewViewportModel = nil
+            local PreviewRotation = 0
 
             function Preview:SetText(Text)
                 Items["Text"].Instance.Text = Text
@@ -4232,7 +4233,9 @@ do
 
                 local _, Focus = bodyCorners()
                 Focus = Focus or Root.Position
-                ViewportCamera.CFrame = CFrame.new(Focus + Root.CFrame.LookVector * 9.5, Focus)
+                PreviewRotation = (PreviewRotation + Delta * math.rad(32)) % (math.pi * 2)
+                local CameraOffset = Vector3.new(math.sin(PreviewRotation) * 9.5, 0, math.cos(PreviewRotation) * 9.5)
+                ViewportCamera.CFrame = CFrame.new(Focus + CameraOffset, Focus)
                 updateESP(Delta)
             end)
 
