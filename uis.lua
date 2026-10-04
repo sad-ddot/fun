@@ -3448,7 +3448,7 @@ do
                     Name = "\0",
                     Parent = Library.Holder.Instance,
                     Position = UDim2.new(0, 860, 0, 430),
-                    Size = UDim2.new(0, 258, 0, 334),
+                    Size = UDim2.new(0, 258, 0, 374),
                     BorderSizePixel = 0,
                     BackgroundColor3 = Library.Theme["Background"]
                 }):AddToTheme({ BackgroundColor3 = 'Background' })
@@ -4040,7 +4040,7 @@ do
                     CF * Vector3.new(-SX, SY, -SZ), CF * Vector3.new(SX, SY, -SZ),
                     CF * Vector3.new(-SX, -SY, SZ), CF * Vector3.new(SX, -SY, SZ),
                     CF * Vector3.new(-SX, SY, SZ), CF * Vector3.new(SX, SY, SZ)
-                }
+                }, CF.Position
             end
 
             local function updateHealth(Delta)
@@ -4178,8 +4178,6 @@ do
                     return
                 end
 
-                ViewportCamera.CFrame = CFrame.new(Root.CFrame:ToWorldSpace(OFFSET).Position, Root.Position)
-
                 for Original, Clone in pairs(RenderObjects) do
                     if Original and Original.Parent then
                         Clone.CFrame = Original.CFrame
@@ -4187,6 +4185,10 @@ do
                         Preview:RemoveObject(Original)
                     end
                 end
+
+                local _, Focus = bodyCorners()
+                Focus = Focus or Root.Position
+                ViewportCamera.CFrame = CFrame.new(Focus + Root.CFrame.LookVector * 9.5, Focus)
                 updateESP(Delta)
             end)
 
