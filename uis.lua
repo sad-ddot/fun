@@ -3460,23 +3460,85 @@ do
                 Selected = nil,
             }
 
-            local section = Library.Section({
-                Window = params.Window,
-                ColumnsData = {[1] = Library.Holder},
-            }, {
-                Name = params.Name or "CONFIGS",
-                Side = 1,
-            })
-            local root = section.Items["SectionOutline"]
-            root.Instance.AutomaticSize = Enum.AutomaticSize.Y
-            root.Instance.Position = params.Position or UDim2.new(1, -266, 0.5, -175)
-            root.Instance.Size = UDim2.new(0, 246, 0, 20)
-            root.Instance.Visible = false
-            root:MakeDraggable()
+            local items = {}
+            items.Root = Library:Create("Frame", {
+                Name = "\0",
+                Parent = Library.Holder.Instance,
+                AnchorPoint = Vector2.new(0, 0),
+                Position = params.Position or UDim2.new(1, -266, 0.5, -175),
+                Size = UDim2.new(0, 246, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BorderSizePixel = 0,
+                BackgroundColor3 = Library.Theme["Background"],
+                Visible = false,
+            }):AddToTheme({BackgroundColor3 = "Background"})
+            items.Root:MakeDraggable()
 
-            local content = section.Items["Content"]
-            content.Instance.Position = UDim2.new(0, 12, 0, 15)
-            content.Instance.Size = UDim2.new(1, -24, 0, 0)
+            Library:Create("UIStroke", {
+                Name = "\0",
+                Parent = items.Root.Instance,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                LineJoinMode = Enum.LineJoinMode.Miter,
+                Color = Library.Theme["Outline"],
+            }):AddToTheme({Color = "Outline"})
+            Library:Create("UIStroke", {
+                Name = "\0",
+                Parent = items.Root.Instance,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                LineJoinMode = Enum.LineJoinMode.Miter,
+                Color = Library.Theme["Border"],
+                BorderOffset = UDim.new(0, 1),
+            }):AddToTheme({Color = "Border"})
+
+            items.Title = Library:Create("TextLabel", {
+                Name = "\0",
+                Parent = items.Root.Instance,
+                Position = UDim2.new(0, 8, 0, 4),
+                Size = UDim2.new(1, -16, 0, 15),
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                FontFace = Library.Font,
+                TextSize = Library.FontSize,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Text = params.Name or "CONFIGS",
+                TextColor3 = Library.Theme["Text"],
+            }):AddToTheme({TextColor3 = "Text"})
+
+            items.Accent = Library:Create("Frame", {
+                Name = "\0",
+                Parent = items.Root.Instance,
+                Position = UDim2.new(0, 0, 0, 22),
+                Size = UDim2.new(1, 0, 0, 1),
+                BorderSizePixel = 0,
+                BackgroundColor3 = Library.Theme["Accent"],
+            }):AddToTheme({BackgroundColor3 = "Accent"})
+
+            items.Content = Library:Create("Frame", {
+                Name = "\0",
+                Parent = items.Root.Instance,
+                Position = UDim2.new(0, 10, 0, 30),
+                Size = UDim2.new(1, -20, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+            })
+            Library:Create("UIListLayout", {
+                Name = "\0",
+                Parent = items.Content.Instance,
+                Padding = UDim.new(0, 7),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+            })
+            Library:Create("UIPadding", {
+                Name = "\0",
+                Parent = items.Content.Instance,
+                PaddingBottom = UDim.new(0, 10),
+            })
+
+            local section = setmetatable({
+                Window = params.Window,
+                Page = nil,
+                Items = {Content = items.Content},
+            }, Library)
 
             local configList
             local autoloadDropdown
@@ -3529,7 +3591,7 @@ do
             local function makeButtonRow()
                 local row = Library:Create("Frame", {
                     Name = "\0",
-                    Parent = content.Instance,
+                    Parent = items.Content.Instance,
                     Size = UDim2.new(1, 0, 0, 18),
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
@@ -3549,8 +3611,8 @@ do
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
                 })
-                local leftSection = setmetatable({Window = params.Window, Page = section.Page, Items = {Content = left}}, Library)
-                local rightSection = setmetatable({Window = params.Window, Page = section.Page, Items = {Content = right}}, Library)
+                local leftSection = setmetatable({Window = params.Window, Page = nil, Items = {Content = left}}, Library)
+                local rightSection = setmetatable({Window = params.Window, Page = nil, Items = {Content = right}}, Library)
                 return leftSection, rightSection
             end
 
@@ -3652,16 +3714,15 @@ do
                 end
                 widget.Visible = visible
                 if visible then widget:Refresh() end
-                root:FadeDescendants(visible)
+                items.Root:FadeDescendants(visible)
             end
 
-            widget.Items = section.Items
-            widget.Section = section
+            widget.Items = items
             widget.ConfigList = configList
             widget.AutoloadDropdown = autoloadDropdown
             widget.NameTextbox = nameTextbox
             Library.ConfigWidgetInstance = widget
-            Library:RegisterLayout("ConfigWidget", {Instance = root.Instance})
+            Library:RegisterLayout("ConfigWidget", {Instance = items.Root.Instance})
             widget:Refresh()
             return widget
         end
