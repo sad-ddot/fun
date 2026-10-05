@@ -3466,8 +3466,8 @@ do
                 Parent = Library.Holder.Instance,
                 AnchorPoint = Vector2.new(0, 0),
                 Position = params.Position or UDim2.new(1, -266, 0.5, -175),
-                Size = UDim2.new(0, 246, 0, 0),
-                AutomaticSize = Enum.AutomaticSize.Y,
+                Size = UDim2.new(0, 246, 0, 350),
+                AutomaticSize = Enum.AutomaticSize.None,
                 BorderSizePixel = 0,
                 BackgroundColor3 = Library.Theme["Background"],
                 Visible = false,
@@ -3493,7 +3493,7 @@ do
             items.Title = Library:Create("TextLabel", {
                 Name = "\0",
                 Parent = items.Root.Instance,
-                Position = UDim2.new(0, 8, 0, 4),
+                Position = UDim2.new(0, 8, 0, 7),
                 Size = UDim2.new(1, -16, 0, 15),
                 BackgroundTransparency = 1,
                 BorderSizePixel = 0,
@@ -3507,7 +3507,7 @@ do
             items.Accent = Library:Create("Frame", {
                 Name = "\0",
                 Parent = items.Root.Instance,
-                Position = UDim2.new(0, 0, 0, 22),
+                Position = UDim2.new(0, 0, 0, 2),
                 Size = UDim2.new(1, 0, 0, 1),
                 BorderSizePixel = 0,
                 BackgroundColor3 = Library.Theme["Accent"],
@@ -3516,22 +3516,22 @@ do
             items.Content = Library:Create("Frame", {
                 Name = "\0",
                 Parent = items.Root.Instance,
-                Position = UDim2.new(0, 10, 0, 30),
-                Size = UDim2.new(1, -20, 0, 0),
-                AutomaticSize = Enum.AutomaticSize.Y,
+                Position = UDim2.new(0, 16, 0, 36),
+                Size = UDim2.new(1, -32, 1, -46),
+                AutomaticSize = Enum.AutomaticSize.None,
                 BackgroundTransparency = 1,
                 BorderSizePixel = 0,
             })
             Library:Create("UIListLayout", {
                 Name = "\0",
                 Parent = items.Content.Instance,
-                Padding = UDim.new(0, 7),
+                Padding = UDim.new(0, 5),
                 SortOrder = Enum.SortOrder.LayoutOrder,
             })
             Library:Create("UIPadding", {
                 Name = "\0",
                 Parent = items.Content.Instance,
-                PaddingBottom = UDim.new(0, 10),
+                PaddingBottom = UDim.new(0, 0),
             })
 
             local section = setmetatable({
@@ -3559,7 +3559,7 @@ do
                 Name = "Configs",
                 Flag = "ConfigWidgetList",
                 Items = {},
-                Height = 170,
+                Height = 205,
                 Callback = function(configName)
                     widget.Selected = configName
                     if nameTextbox then
@@ -3576,9 +3576,22 @@ do
                 Multi = false,
                 Callback = function(configName)
                     Library:SetAutoload(configName == "None" and nil or configName)
+                    task.defer(function()
+                        if autoloadDropdown then
+                            autoloadDropdown.Items["Value"].Instance.Text = "AUTOLOAD: " .. string.upper(configName or "NONE")
+                        end
+                    end)
                 end,
             })
             autoloadDropdown.KeepValid = true
+            autoloadDropdown.Items["Dropdown"].Instance.Size = UDim2.new(1, 0, 0, 20)
+            autoloadDropdown.Items["Text"].Instance.Visible = false
+            autoloadDropdown.Items["RealDropdown"].Instance.AnchorPoint = Vector2.new(0, 0)
+            autoloadDropdown.Items["RealDropdown"].Instance.Position = UDim2.new(0, 0, 0, 0)
+            autoloadDropdown.Items["RealDropdown"].Instance.Size = UDim2.new(1, 0, 0, 20)
+            autoloadDropdown.Items["Value"].Instance.Position = UDim2.new(0, 5, 0.5, -1)
+            autoloadDropdown.Items["Value"].Instance.Size = UDim2.new(1, -24, 0, 15)
+            autoloadDropdown.Items["Value"].Instance.Text = "AUTOLOAD: NONE"
 
             nameTextbox = section:Textbox({
                 Name = "Config name",
@@ -3618,7 +3631,7 @@ do
 
             local loadSection, saveSection = makeButtonRow()
             loadSection:Button({
-                Name = "Load",
+                Name = "LOAD",
                 Callback = function()
                     local configName = currentName()
                     if not configName then return end
@@ -3634,7 +3647,7 @@ do
                 end,
             })
             saveSection:Button({
-                Name = "Save",
+                Name = "SAVE",
                 Callback = function()
                     local configName = currentName()
                     if not configName then return end
@@ -3652,7 +3665,7 @@ do
 
             local createSection, removeSection = makeButtonRow()
             createSection:Button({
-                Name = "Create",
+                Name = "CREATE",
                 Callback = function()
                     local configName = currentName()
                     if not configName then return end
@@ -3668,7 +3681,7 @@ do
                 end,
             })
             removeSection:Button({
-                Name = "Remove",
+                Name = "REMOVE",
                 Callback = function()
                     local configName = currentName()
                     if not configName then return end
@@ -3684,6 +3697,13 @@ do
             function widget:Refresh()
                 local configNames = Library:GetConfigNames()
                 configList:Refresh(configNames)
+                for _, option in configList.Options do
+                    option.button.Instance.Size = UDim2.new(1, 0, 0, 17)
+                    option.text.Instance.Position = UDim2.new(0, 0, 0, 0)
+                    option.text.Instance.Size = UDim2.new(1, 0, 1, 0)
+                    option.text.Instance.TextXAlignment = Enum.TextXAlignment.Center
+                    option.text.Instance.Text = string.upper(option.text.Instance.Text)
+                end
                 if widget.Selected and table.find(configNames, widget.Selected) then
                     configList:Set(widget.Selected, true)
                 else
