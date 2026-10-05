@@ -3472,7 +3472,6 @@ do
             root.Instance.Position = params.Position or UDim2.new(1, -266, 0.5, -175)
             root.Instance.Size = UDim2.new(0, 246, 0, 20)
             root.Instance.Visible = false
-            root.Instance.ZIndex = 200
             root:MakeDraggable()
 
             local content = section.Items["Content"]
