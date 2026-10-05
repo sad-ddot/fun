@@ -3501,8 +3501,8 @@ do
                 TextSize = Library.FontSize,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Text = params.Name or "CONFIGS",
-                TextColor3 = Library.Theme["Text"],
-            }):AddToTheme({TextColor3 = "Text"})
+                TextColor3 = Library.Theme["Accent"],
+            }):AddToTheme({TextColor3 = "Accent"})
 
             items.Accent = Library:Create("Frame", {
                 Name = "\0",
@@ -3512,6 +3512,20 @@ do
                 BorderSizePixel = 0,
                 BackgroundColor3 = Library.Theme["Accent"],
             }):AddToTheme({BackgroundColor3 = "Accent"})
+            items.AccentGlow = {}
+            local glowFade = {0.11, 0.09, 0.072, 0.056, 0.042, 0.030, 0.020, 0.012}
+            for thickness, opacity in glowFade do
+                local glowStroke = Library:Create("UIStroke", {
+                    Name = "\0",
+                    Parent = items.Accent.Instance,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    Thickness = thickness,
+                    Transparency = 1 - opacity,
+                    Color = Library.Theme["Accent"],
+                }):AddToTheme({Color = "Accent"})
+                table.insert(items.AccentGlow, glowStroke)
+            end
 
             items.Content = Library:Create("Frame", {
                 Name = "\0",
@@ -3560,6 +3574,7 @@ do
                 Flag = "ConfigWidgetList",
                 Items = {},
                 Height = 205,
+                BackgroundTheme = "Section",
                 Callback = function(configName)
                     widget.Selected = configName
                     if nameTextbox then
@@ -9519,6 +9534,7 @@ do
 
         Library.ListBox = function(self, params)
             params = params or {}
+            local backgroundTheme = params.BackgroundTheme or "Element"
 
             local listBox = {
                 Section = self,
@@ -9561,8 +9577,8 @@ do
                     Position = UDim2.new(0, 1, 0, 1),
                     Size = UDim2.new(1, -2, 1, -2),
                     BorderSizePixel = 0,
-                    BackgroundColor3 = Library.Theme["Element"]
-                }):AddToTheme({ BackgroundColor3 = "Element", ScrollBarImageColor3 = "Accent" })
+                    BackgroundColor3 = Library.Theme[backgroundTheme]
+                }):AddToTheme({ BackgroundColor3 = backgroundTheme, ScrollBarImageColor3 = "Accent" })
 
                 Library:Create("UIListLayout", {
                     Name = "\0",
