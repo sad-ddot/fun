@@ -120,6 +120,7 @@ local Library = {
     LayoutRegistry = {},
     SettingsWidgets = {},
     SettingsControls = {},
+    ConfigIgnoreFlags = {},
     ActiveConfirmDialog = nil,
     MouseCursor = nil,
     MouseStateBeforeOpen = nil,
@@ -1397,6 +1398,9 @@ do
 
         local Success, Result = Library:SafeCall(function()
             for Index, Value in Library.Flags do
+                if Library.ConfigIgnoreFlags[Index] then
+                    continue
+                end
                 if type(Value) == "table" and Value.Key then
                     Config[Index] = { Key = tostring(Value.Key), Mode = Value.Mode, Toggled = Value.Toggled }
                 elseif type(Value) == "table" and Value.Color then
@@ -1424,6 +1428,9 @@ do
 
         local Success, Result = Library:SafeCall(function()
             for Index, Value in FlagData do
+                if Library.ConfigIgnoreFlags[Index] then
+                    continue
+                end
                 local SetFunction = Library.SetFlags[Index]
 
                 if not SetFunction then
@@ -1440,6 +1447,9 @@ do
             end
 
             for Index, Value in FlagData do
+                if Library.ConfigIgnoreFlags[Index] then
+                    continue
+                end
                 if type(Value) ~= "table" or not Value.Key then
                     continue
                 end
@@ -3448,332 +3458,192 @@ do
             local widget = {
                 Visible = false,
                 Selected = nil,
-                Autoload = Library:GetAutoload(),
-                Rows = {},
-                DropdownRows = {},
             }
-            local items = {}
 
-            items.Root = Library:Create("Frame", {
-                Name = "\0",
-                Parent = Library.Holder.Instance,
-                Position = params.Position or UDim2.new(1, -266, 0.5, -175),
-                Size = UDim2.new(0, 246, 0, 350),
-                BorderSizePixel = 0,
-                BackgroundColor3 = Library.Theme.Background,
-                Visible = false,
-                ZIndex = 200,
-            }):AddToTheme({BackgroundColor3 = "Background"})
-            items.Root:MakeDraggable()
-
-            Library:Create("UIStroke", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                LineJoinMode = Enum.LineJoinMode.Miter,
-                Color = Library.Theme.Outline,
-            }):AddToTheme({Color = "Outline"})
-            Library:Create("UIStroke", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                LineJoinMode = Enum.LineJoinMode.Miter,
-                Color = Library.Theme.Border,
-                BorderOffset = UDim.new(0, 1),
-            }):AddToTheme({Color = "Border"})
-
-            items.Title = Library:Create("TextLabel", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                Position = UDim2.new(0, 8, 0, 3),
-                Size = UDim2.new(1, -16, 0, 16),
-                BackgroundTransparency = 1,
-                BorderSizePixel = 0,
-                FontFace = Library.Font,
-                TextSize = Library.FontSize,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Text = params.Name or "CONFIGS",
-                TextColor3 = Library.Theme.Text,
-                ZIndex = 201,
-            }):AddToTheme({TextColor3 = "Text"})
-
-            items.Accent = Library:Create("Frame", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                Position = UDim2.new(0, 0, 0, 22),
-                Size = UDim2.new(1, 0, 0, 1),
-                BorderSizePixel = 0,
-                BackgroundColor3 = Library.Theme.Accent,
-                ZIndex = 201,
-            }):AddToTheme({BackgroundColor3 = "Accent"})
-
-            items.List = Library:Create("ScrollingFrame", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                Position = UDim2.new(0, 10, 0, 34),
-                Size = UDim2.new(1, -20, 0, 205),
-                BackgroundColor3 = Library.Theme.Section,
-                BorderColor3 = Library.Theme.Border,
-                BorderSizePixel = 1,
-                CanvasSize = UDim2.new(0, 0, 0, 0),
-                ScrollBarThickness = 2,
-                ScrollBarImageColor3 = Library.Theme.Accent,
-                ZIndex = 201,
-            }):AddToTheme({BackgroundColor3 = "Section", BorderColor3 = "Border", ScrollBarImageColor3 = "Accent"})
-            Library:Create("UIListLayout", {
-                Name = "\0",
-                Parent = items.List.Instance,
-                Padding = UDim.new(0, 2),
-                SortOrder = Enum.SortOrder.LayoutOrder,
+            local section = Library.Section({
+                Window = params.Window,
+                ColumnsData = {[1] = Library.Holder},
+            }, {
+                Name = params.Name or "CONFIGS",
+                Side = 1,
             })
-            Library:Create("UIPadding", {
-                Name = "\0",
-                Parent = items.List.Instance,
-                PaddingTop = UDim.new(0, 5),
-                PaddingBottom = UDim.new(0, 5),
-                PaddingLeft = UDim.new(0, 4),
-                PaddingRight = UDim.new(0, 4),
-            })
+            local root = section.Items["SectionOutline"]
+            root.Instance.AutomaticSize = Enum.AutomaticSize.Y
+            root.Instance.Position = params.Position or UDim2.new(1, -266, 0.5, -175)
+            root.Instance.Size = UDim2.new(0, 246, 0, 20)
+            root.Instance.Visible = false
+            root.Instance.ZIndex = 200
+            root:MakeDraggable()
 
-            local function makeBox(position, size, text, callback)
-                local button = Library:Create("TextButton", {
-                    Name = "\0",
-                    Parent = items.Root.Instance,
-                    Position = position,
-                    Size = size,
-                    AutoButtonColor = false,
-                    Text = "",
-                    BackgroundColor3 = Library.Theme.Element,
-                    BorderColor3 = Library.Theme.Border,
-                    BorderSizePixel = 1,
-                    ZIndex = 202,
-                }):AddToTheme({BackgroundColor3 = "Element", BorderColor3 = "Border"})
-                local label = Library:Create("TextLabel", {
-                    Name = "\0",
-                    Parent = button.Instance,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    FontFace = Library.Font,
-                    TextSize = Library.FontSize,
-                    Text = text,
-                    TextColor3 = Library.Theme.Text,
-                    ZIndex = 203,
-                }):AddToTheme({TextColor3 = "Text"})
-                if callback then
-                    button:Connect("MouseButton1Click", callback)
-                end
-                return button, label
-            end
+            local content = section.Items["Content"]
+            content.Instance.Position = UDim2.new(0, 12, 0, 15)
+            content.Instance.Size = UDim2.new(1, -24, 0, 0)
 
-            local autoloadButton, autoloadLabel = makeBox(
-                UDim2.new(0, 10, 0, 246),
-                UDim2.new(1, -20, 0, 19),
-                "AUTOLOAD: NONE"
-            )
-            autoloadLabel.Instance.TextXAlignment = Enum.TextXAlignment.Left
-            autoloadLabel.Instance.Position = UDim2.new(0, 5, 0, 0)
-            autoloadLabel.Instance.Size = UDim2.new(1, -10, 1, 0)
-
-            items.Input = Library:Create("TextBox", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                Position = UDim2.new(0, 10, 0, 270),
-                Size = UDim2.new(1, -20, 0, 19),
-                BackgroundColor3 = Library.Theme.Element,
-                BorderColor3 = Library.Theme.Border,
-                BorderSizePixel = 1,
-                ClearTextOnFocus = false,
-                FontFace = Library.Font,
-                TextSize = Library.FontSize,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Text = "",
-                PlaceholderText = "CONFIG NAME",
-                PlaceholderColor3 = Library.Theme.Text,
-                TextColor3 = Library.Theme.Text,
-                ZIndex = 202,
-            }):AddToTheme({BackgroundColor3 = "Element", BorderColor3 = "Border", TextColor3 = "Text", PlaceholderColor3 = "Text"})
-            Library:Create("UIPadding", {
-                Name = "\0",
-                Parent = items.Input.Instance,
-                PaddingLeft = UDim.new(0, 5),
-                PaddingRight = UDim.new(0, 5),
-            })
-
-            items.Dropdown = Library:Create("ScrollingFrame", {
-                Name = "\0",
-                Parent = items.Root.Instance,
-                Position = UDim2.new(0, 10, 0, 145),
-                Size = UDim2.new(1, -20, 0, 96),
-                BackgroundColor3 = Library.Theme.Background,
-                BorderColor3 = Library.Theme.Accent,
-                BorderSizePixel = 1,
-                CanvasSize = UDim2.new(0, 0, 0, 0),
-                ScrollBarThickness = 2,
-                ScrollBarImageColor3 = Library.Theme.Accent,
-                Visible = false,
-                ZIndex = 210,
-            }):AddToTheme({BackgroundColor3 = "Background", BorderColor3 = "Accent", ScrollBarImageColor3 = "Accent"})
-            Library:Create("UIListLayout", {
-                Name = "\0",
-                Parent = items.Dropdown.Instance,
-                SortOrder = Enum.SortOrder.LayoutOrder,
-            })
-
-            local function clearRows(rows)
-                for _, row in rows do
-                    if row.Instance then
-                        row.Instance:Destroy()
-                    end
-                end
-                table.clear(rows)
-            end
-
-            function widget:Select(configName)
-                widget.Selected = configName
-                items.Input.Instance.Text = configName or ""
-                for _, rowData in widget.Rows do
-                    rowData.Label.Instance.TextColor3 = rowData.Name == configName and Library.Theme.Accent or Library.Theme.Text
-                end
-            end
-
-            local function setAutoload(configName)
-                configName = configName or ""
-                if Library:SetAutoload(configName) then
-                    widget.Autoload = configName ~= "" and configName or nil
-                    autoloadLabel.Instance.Text = "AUTOLOAD: " .. string.upper(widget.Autoload or "NONE")
-                end
-                items.Dropdown.Instance.Visible = false
-            end
-
-            local function refreshDropdown(configNames)
-                clearRows(widget.DropdownRows)
-                local dropdownNames = {"None"}
-                for _, configName in configNames do
-                    table.insert(dropdownNames, configName)
-                end
-                for index, configName in dropdownNames do
-                    local row, rowLabel = makeBox(
-                        UDim2.new(),
-                        UDim2.new(1, 0, 0, 18),
-                        string.upper(configName),
-                        function()
-                            setAutoload(configName == "None" and nil or configName)
-                        end
-                    )
-                    row.Instance.Parent = items.Dropdown.Instance
-                    row.Instance.LayoutOrder = index
-                    row.Instance.ZIndex = 211
-                    rowLabel.Instance.ZIndex = 212
-                    table.insert(widget.DropdownRows, row)
-                end
-                items.Dropdown.Instance.CanvasSize = UDim2.new(0, 0, 0, #dropdownNames * 18)
-            end
-
-            function widget:Refresh()
-                clearRows(widget.Rows)
-                local configNames = Library:GetConfigNames()
-                if widget.Selected and not table.find(configNames, widget.Selected) then
-                    widget:Select(nil)
-                end
-
-                for index, configName in configNames do
-                    local row = Library:Create("TextButton", {
-                        Name = "\0",
-                        Parent = items.List.Instance,
-                        Size = UDim2.new(1, 0, 0, 17),
-                        BackgroundTransparency = 1,
-                        BorderSizePixel = 0,
-                        AutoButtonColor = false,
-                        Text = "",
-                        LayoutOrder = index,
-                        ZIndex = 202,
-                    })
-                    local rowLabel = Library:Create("TextLabel", {
-                        Name = "\0",
-                        Parent = row.Instance,
-                        Size = UDim2.new(1, 0, 1, 0),
-                        BackgroundTransparency = 1,
-                        BorderSizePixel = 0,
-                        FontFace = Library.Font,
-                        TextSize = Library.FontSize,
-                        Text = string.upper(configName),
-                        TextColor3 = configName == widget.Selected and Library.Theme.Accent or Library.Theme.Text,
-                        ZIndex = 203,
-                    }):AddToTheme({TextColor3 = configName == widget.Selected and "Accent" or "Text"})
-                    row:Connect("MouseButton1Click", function()
-                        widget:Select(configName)
-                    end)
-                    table.insert(widget.Rows, {Name = configName, Instance = row.Instance, Label = rowLabel})
-                end
-
-                items.List.Instance.CanvasSize = UDim2.new(0, 0, 0, math.max(#configNames * 19 + 10, 0))
-                widget.Autoload = Library:GetAutoload()
-                if widget.Autoload and not table.find(configNames, widget.Autoload) then
-                    Library:SetAutoload(nil)
-                    widget.Autoload = nil
-                end
-                autoloadLabel.Instance.Text = "AUTOLOAD: " .. string.upper(widget.Autoload or "NONE")
-                refreshDropdown(configNames)
-            end
-
-            autoloadButton:Connect("MouseButton1Click", function()
-                widget:Refresh()
-                items.Dropdown.Instance.Visible = not items.Dropdown.Instance.Visible
-            end)
+            local configList
+            local autoloadDropdown
+            local nameTextbox
+            Library.ConfigIgnoreFlags.ConfigWidgetList = true
+            Library.ConfigIgnoreFlags.ConfigWidgetAutoload = true
+            Library.ConfigIgnoreFlags.ConfigWidgetName = true
 
             local function currentName()
-                local configName = items.Input.Instance.Text:match("^%s*(.-)%s*$")
+                local configName = tostring(nameTextbox and nameTextbox.Value or ""):match("^%s*(.-)%s*$")
                 if configName == "" then
                     return widget.Selected
                 end
                 return configName
             end
 
-            makeBox(UDim2.new(0, 10, 0, 296), UDim2.new(0.5, -12, 0, 19), "LOAD", function()
-                local configName = currentName()
-                if not configName then return end
-                local success, result = Library:LoadConfigFromFile(configName)
-                if success then
-                    widget:Select(configName)
-                    Library:Notification("Loaded config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+            configList = section:ListBox({
+                Name = "Configs",
+                Flag = "ConfigWidgetList",
+                Items = {},
+                Height = 170,
+                Callback = function(configName)
+                    widget.Selected = configName
+                    if nameTextbox then
+                        nameTextbox:Set(configName or "")
+                    end
+                end,
+            })
+
+            autoloadDropdown = section:Dropdown({
+                Name = "Autoload",
+                Flag = "ConfigWidgetAutoload",
+                Items = {"None"},
+                Default = "None",
+                Multi = false,
+                Callback = function(configName)
+                    Library:SetAutoload(configName == "None" and nil or configName)
+                end,
+            })
+            autoloadDropdown.KeepValid = true
+
+            nameTextbox = section:Textbox({
+                Name = "Config name",
+                Flag = "ConfigWidgetName",
+                Placeholder = "Config name",
+                Default = "",
+                Callback = function() end,
+            })
+
+            local function makeButtonRow()
+                local row = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = content.Instance,
+                    Size = UDim2.new(1, 0, 0, 18),
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                })
+                local left = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = row.Instance,
+                    Size = UDim2.new(0.5, -3, 1, 0),
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                })
+                local right = Library:Create("Frame", {
+                    Name = "\0",
+                    Parent = row.Instance,
+                    Position = UDim2.new(0.5, 3, 0, 0),
+                    Size = UDim2.new(0.5, -3, 1, 0),
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                })
+                local leftSection = setmetatable({Window = params.Window, Page = section.Page, Items = {Content = left}}, Library)
+                local rightSection = setmetatable({Window = params.Window, Page = section.Page, Items = {Content = right}}, Library)
+                return leftSection, rightSection
+            end
+
+            local loadSection, saveSection = makeButtonRow()
+            loadSection:Button({
+                Name = "Load",
+                Callback = function()
+                    local configName = currentName()
+                    if not configName then return end
+                    local success, result = Library:LoadConfigFromFile(configName)
+                    if success then
+                        widget.Selected = configName
+                        configList:Set(configName, true)
+                        nameTextbox:Set(configName)
+                        Library:Notification("Loaded config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+                    else
+                        Library:Notification("Failed to load config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
+                    end
+                end,
+            })
+            saveSection:Button({
+                Name = "Save",
+                Callback = function()
+                    local configName = currentName()
+                    if not configName then return end
+                    local success, result = Library:SaveConfigToFile(configName)
+                    if success then
+                        widget.Selected = configName
+                        nameTextbox:Set(configName)
+                        widget:Refresh()
+                        Library:Notification("Saved config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+                    else
+                        Library:Notification("Failed to save config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
+                    end
+                end,
+            })
+
+            local createSection, removeSection = makeButtonRow()
+            createSection:Button({
+                Name = "Create",
+                Callback = function()
+                    local configName = currentName()
+                    if not configName then return end
+                    local success, result = Library:SaveConfigToFile(configName)
+                    if success then
+                        widget.Selected = configName
+                        nameTextbox:Set(configName)
+                        widget:Refresh()
+                        Library:Notification("Created config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+                    else
+                        Library:Notification("Failed to create config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
+                    end
+                end,
+            })
+            removeSection:Button({
+                Name = "Remove",
+                Callback = function()
+                    local configName = currentName()
+                    if not configName then return end
+                    if Library:DeleteConfigFromFile(configName) then
+                        widget.Selected = nil
+                        nameTextbox:Set("")
+                        widget:Refresh()
+                        Library:Notification("Removed config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+                    end
+                end,
+            })
+
+            function widget:Refresh()
+                local configNames = Library:GetConfigNames()
+                configList:Refresh(configNames)
+                if widget.Selected and table.find(configNames, widget.Selected) then
+                    configList:Set(widget.Selected, true)
                 else
-                    Library:Notification("Failed to load config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
+                    widget.Selected = nil
+                    configList:Set(nil, true)
                 end
-            end)
-            makeBox(UDim2.new(0.5, 2, 0, 296), UDim2.new(0.5, -12, 0, 19), "SAVE", function()
-                local configName = currentName()
-                if not configName then return end
-                local success, result = Library:SaveConfigToFile(configName)
-                if success then
-                    widget:Select(configName)
-                    widget:Refresh()
-                    Library:Notification("Saved config " .. configName, 3, Color3.fromRGB(0, 255, 0))
+
+                local autoloadItems = {"None"}
+                for _, configName in configNames do
+                    table.insert(autoloadItems, configName)
+                end
+                autoloadDropdown:Refresh(autoloadItems)
+
+                local autoloadName = Library:GetAutoload()
+                if autoloadName and table.find(configNames, autoloadName) then
+                    autoloadDropdown:Set(autoloadName)
                 else
-                    Library:Notification("Failed to save config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
+                    if autoloadName then Library:SetAutoload(nil) end
+                    autoloadDropdown:Set("None")
                 end
-            end)
-            makeBox(UDim2.new(0, 10, 0, 321), UDim2.new(0.5, -12, 0, 19), "CREATE", function()
-                local configName = currentName()
-                if not configName then return end
-                local success, result = Library:SaveConfigToFile(configName)
-                if success then
-                    widget:Select(configName)
-                    widget:Refresh()
-                    Library:Notification("Created config " .. configName, 3, Color3.fromRGB(0, 255, 0))
-                else
-                    Library:Notification("Failed to create config: " .. tostring(result), 3, Color3.fromRGB(255, 0, 0))
-                end
-            end)
-            makeBox(UDim2.new(0.5, 2, 0, 321), UDim2.new(0.5, -12, 0, 19), "REMOVE", function()
-                local configName = currentName()
-                if not configName then return end
-                if Library:DeleteConfigFromFile(configName) then
-                    widget:Select(nil)
-                    widget:Refresh()
-                    Library:Notification("Removed config " .. configName, 3, Color3.fromRGB(0, 255, 0))
-                end
-            end)
+            end
 
             function widget:SetVisibility(visible)
                 visible = visible == true
@@ -3783,12 +3653,16 @@ do
                 end
                 widget.Visible = visible
                 if visible then widget:Refresh() end
-                items.Root:FadeDescendants(visible)
+                root:FadeDescendants(visible)
             end
 
-            widget.Items = items
+            widget.Items = section.Items
+            widget.Section = section
+            widget.ConfigList = configList
+            widget.AutoloadDropdown = autoloadDropdown
+            widget.NameTextbox = nameTextbox
             Library.ConfigWidgetInstance = widget
-            Library:RegisterLayout("ConfigWidget", {Instance = items.Root.Instance})
+            Library:RegisterLayout("ConfigWidget", {Instance = root.Instance})
             widget:Refresh()
             return widget
         end
@@ -13028,147 +12902,7 @@ do
         Library.CreateSettingsPage = function(Self)
             local Page = Self:Page({ Name = "Settings", Icon = "rbxassetid://0" })
 
-            local ConfigsSubPage = Page:SubPage({ Name = "Configs" })
             local OtherSubPage = Page:SubPage({ Name = "Other" })
-
-            do
-                local ConfigName
-                local ConfigSelected
-                local ConfigsFolder = Library.Directory .. Library.Folders.Configs .. "/"
-
-                local ConfigsSection = ConfigsSubPage:Section({ Name = "Configs", Side = 1 })
-                do
-                    local ConfigName
-                    local ConfigSelected
-                    local ConfigsFolder = Library.Directory .. Library.Folders.Configs .. "/"
-
-                    local ConfigsDropdown = ConfigsSection:Dropdown({
-                        Name = "Configs",
-                        Flag = "ConfigsDropdown",
-                        Items = {},
-                        Multi = false,
-                        Callback = function(Value)
-                            ConfigSelected = Value
-                        end
-                    })
-
-                    ConfigsDropdown.KeepValid = true
-
-                    ConfigsSection:Textbox({
-                        Name = "Config name",
-                        Flag = "ConfigName",
-                        Placeholder = "Config name",
-                        Callback = function(Value)
-                            ConfigName = Value
-                        end
-                    })
-
-                    ConfigsSection:Button({
-                        Name = "Create",
-                        Callback = function()
-                            if ConfigName then
-                                if ConfigName == "" then
-                                    return
-                                end
-
-                                writefile(ConfigsFolder .. ConfigName .. ".json", Library:GetConfig())
-                                Library:GetConfigsList(ConfigsDropdown)
-                                if Library.ConfigWidgetInstance then
-                                    Library.ConfigWidgetInstance:Refresh()
-                                end
-                                Library:Notification("Succesfully created config", 3, Color3.fromRGB(0, 255, 0))
-                            end
-                        end
-                    })
-
-                    local DeleteArmed = nil
-                    local DeleteButton
-                    DeleteButton = ConfigsSection:Button({
-                        Name = "Delete",
-                        Callback = function()
-                            if not ConfigSelected or not isfile(ConfigsFolder .. ConfigSelected .. ".json") then
-                                return
-                            end
-
-                            if DeleteArmed ~= ConfigSelected then
-                                local Token = {}
-                                DeleteArmed = ConfigSelected
-                                DeleteButton.ArmToken = Token
-                                DeleteButton:SetText("Are you sure?")
-                                task.delay(3, function()
-                                    if DeleteButton.ArmToken == Token then
-                                        DeleteArmed = nil
-                                        DeleteButton.ArmToken = nil
-                                        DeleteButton:SetText("Delete")
-                                    end
-                                end)
-                                return
-                            end
-
-                            DeleteArmed = nil
-                            DeleteButton.ArmToken = nil
-                            DeleteButton:SetText("Delete")
-                            local Deleted = ConfigSelected
-                            delfile(ConfigsFolder .. Deleted .. ".json")
-                            if Library:GetAutoload() == Deleted then
-                                Library:SetAutoload(nil)
-                            end
-                            ConfigSelected = nil
-                            Library:GetConfigsList(ConfigsDropdown, Deleted)
-                            if Library.ConfigWidgetInstance then
-                                Library.ConfigWidgetInstance:Refresh()
-                            end
-                            Library:Notification("Succesfully deleted config", 3, Color3.fromRGB(0, 255, 0))
-                        end
-                    })
-
-                    ConfigsSection:Button({
-                        Name = "Load",
-                        Callback = function()
-                            if ConfigSelected then
-                                if isfile(ConfigsFolder .. ConfigSelected .. ".json") then
-                                    local ConfigContent = readfile(ConfigsFolder .. ConfigSelected .. ".json")
-                                    local Success, Error = Library:LoadConfig(ConfigContent)
-
-                                    if Success then
-                                        Library:Notification("Succesfully loaded config", 3, Color3.fromRGB(0, 255, 0))
-                                    else
-                                        Library:Notification("Failed to load config: \n" .. Error, 3,
-                                            Color3.fromRGB(255, 0, 0))
-                                    end
-                                end
-                            else
-                                Library:Notification("No config selected", 3, Color3.fromRGB(255, 0, 0))
-                            end
-                        end
-                    })
-
-                    ConfigsSection:Button({
-                        Name = "Save",
-                        Callback = function()
-                            if ConfigSelected then
-                                if isfile(ConfigsFolder .. ConfigSelected .. ".json") then
-                                    local Success, Error = pcall(function()
-                                        writefile(ConfigsFolder .. ConfigSelected .. ".json", Library:GetConfig())
-                                    end)
-
-                                    if Success then
-                                        if Library.ConfigWidgetInstance then
-                                            Library.ConfigWidgetInstance:Refresh()
-                                        end
-                                        Library:Notification("Succesfully saved config", 3, Color3.fromRGB(0, 255, 0))
-                                    else
-                                        Library:Notification("Failed to save config: \n" .. Error, 3,
-                                            Color3.fromRGB(255, 0, 0))
-                                    end
-                                end
-                            end
-                        end
-                    })
-
-                    Library:GetConfigsList(ConfigsDropdown)
-                end
-            end
 
             do
                 local ThemingSection = OtherSubPage:Section({ Name = "Theming", Side = 1 })
